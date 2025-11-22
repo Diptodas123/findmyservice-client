@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import './Header.css';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Drawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import Divider from '@mui/material/Divider';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import {
+    AppBar,
+    Toolbar,
+    IconButton,
+    Box,
+    Button,
+    Drawer,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemText,
+    ListItemIcon,
+    Divider,
+    useMediaQuery
+} from '@mui/material';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
@@ -57,7 +59,7 @@ const Header = () => {
             onKeyDown={toggleDrawer(false)}>
             <Box className="drawer-header" sx={{ width: "100%" }}>
                 <Box
-                    component={RouterLink}
+                    component={Link}
                     to="/"
                     aria-label="FindMyService home"
                     className="drawer-logo-wrapper"
@@ -81,7 +83,7 @@ const Header = () => {
                     return (
                         <ListItem disablePadding key={item.path}>
                             <ListItemButton
-                                component={RouterLink}
+                                component={Link}
                                 to={item.path}
                                 onClick={toggleDrawer(false)}
                                 className={active ? 'active' : ''}
@@ -107,7 +109,7 @@ const Header = () => {
                     <Button
                         variant="contained"
                         fullWidth
-                        component={RouterLink}
+                        component={Link}
                         to="/login">
                         Login / Sign Up
                     </Button>
@@ -124,7 +126,7 @@ const Header = () => {
                 </Button>
             )}
             <Box
-                component={RouterLink}
+                component={Link}
                 to="/cart"
                 className="cart-container"
                 sx={{
@@ -168,7 +170,7 @@ const Header = () => {
                     )}
                     <Box className="brand-nav-group">
                         <Box
-                            component={RouterLink}
+                            component={Link}
                             to="/"
                             aria-label="FindMyService home"
                             className="brand-logo-link"
@@ -189,7 +191,7 @@ const Header = () => {
                                 return (
                                     <Button
                                         key={item.path}
-                                        component={RouterLink}
+                                        component={Link}
                                         to={item.path}
                                         color={active ? 'secondary' : 'inherit'}
                                         className={`nav-button ${active ? 'active' : ''}`}
@@ -209,7 +211,7 @@ const Header = () => {
                             </IconButton>
                             {!loggedIn ? (
                                 <Button
-                                    component={RouterLink}
+                                    component={Link}
                                     to="/login"
                                     color="secondary"
                                     variant="contained"
@@ -229,7 +231,7 @@ const Header = () => {
                                 </Button>
                             )}
                             <Box
-                                component={RouterLink}
+                                component={Link}
                                 to="/cart"
                                 className={`cart-container ${location.pathname === '/cart' ? 'active' : ''}`}
                                 sx={{
