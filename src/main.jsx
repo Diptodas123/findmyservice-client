@@ -1,10 +1,31 @@
-import { StrictMode } from 'react'
+import { StrictMode, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { ThemeProvider } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+import { buildTheme } from './theme/theme.js'
+import { ThemeModeProvider } from './theme/themeModeContext.jsx'
+
+const Root = () => {
+  const [mode, setMode] = useState('light');
+  const theme = useMemo(() => buildTheme(mode), [mode]);
+
+  return (
+    <ThemeModeProvider value={{ mode, setMode }}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </ThemeModeProvider>
+  );
+};
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
+    <Root />
+  </StrictMode>
 )
+
+export default Root;
