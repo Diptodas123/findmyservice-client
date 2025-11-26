@@ -1,6 +1,5 @@
 import { createTheme } from '@mui/material/styles';
 
-// Theme factory to support light/dark mode toggle
 export function buildTheme(mode = 'light') {
   const isLight = mode === 'light';
   return createTheme({

@@ -157,7 +157,7 @@ const Header = () => {
 
     return (
         <>
-            <AppBar position="static" elevation={0} className="header-appbar">
+            <AppBar position="fixed" elevation={0} className="header-appbar">
                 <Toolbar className="header-toolbar">
                     {!isMdUp && (
                         <IconButton

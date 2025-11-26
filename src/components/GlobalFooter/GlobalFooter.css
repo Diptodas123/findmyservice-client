@@ -1,0 +1,5 @@
+.footer-top { cursor: pointer; }
+
+@media (max-width: 600px) {
+  .footer-top { padding-bottom: 8px; }
+}

@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap');
+
+.hiw-title {
+    margin: 0 0 0.6rem 0;
+    font-size: 1.375rem;
+    text-align: left;
+    font-family: 'Poppins', Inter, 'Segoe UI', Roboto, Arial, sans-serif;
+    font-weight: 800;
+}
+
+.hiw-title .hiw-highlight {
+    display: inline-block;
+    font-weight: 800;
+    color: var(--hiw-highlight-color, #0b3d91);
+    background: rgba(11,61,145,0.08);
+    padding: 0.12rem 0.6rem;
+    border-radius: 999px;
+    margin-left: 0.35rem;
+    font-size: 1.05rem;
+}
+.hiw-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+}
+.hiw-step {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 1.5rem;
+    border-radius: 12px;
+    min-width: 0;
+}
+.hiw-icon {
+    font-size: 2.25rem;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+.hiw-step-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+.hiw-step-desc {
+    font-size: 0.975rem;
+    color: rgba(0,0,0,0.75);
+    margin-top: 0.25rem;
+    line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+    .hiw-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+    .hiw-grid { grid-template-columns: 1fr; }
+}

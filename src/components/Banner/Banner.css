@@ -1,0 +1,122 @@
+.home-page-heading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 64px;
+    position: relative;
+    margin-top: -28px;
+    padding-top: 28px;
+}
+
+.home-page-heading-container .home-page-banner {
+    height: 30rem;
+    width: 100%;
+    filter: opacity(0.7);
+    display: block;
+    z-index: 1;
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.banner-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.banner-wrap .home-page-heading-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+
+.dark-mode .home-page-heading-container .home-page-banner {
+    filter: opacity(0.5);
+}
+
+.dark-mode .home-page-heading-container .home-page-banner {
+    filter: brightness(0.6) contrast(0.9);
+}
+
+.home-page-heading-overlay {
+    z-index: 3;
+}
+
+.dark-mode .home-page-heading-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 2;
+}
+
+.home-page-heading-overlay .home-page-heading {
+    position: relative;
+    z-index: 4;
+}
+
+.home-page-h1 {
+    font-size: 3rem;
+    font-weight: bolder;
+    text-align: center;
+    text-transform: uppercase;
+    font-family: "Playfair Display", serif;
+}
+
+.home-page-span {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.home-page-heading-container .home-page-heading {
+    position: relative;
+}
+
+.home-page-heading-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.home-page-heading-overlay .home-page-heading {
+    position: relative;
+    text-align: center;
+    pointer-events: auto;
+}
+
+.home-page-heading-container .home-page-banner {
+    object-fit: cover;
+}
+
+.typewriter-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+@media (max-width: 600px) {
+    .home-page-h1 {
+        font-size: 1.6rem;
+    }
+    .home-page-span {
+        font-size: 1rem;
+    }
+    .home-page-heading-container .home-page-banner {
+        height: 16rem;
+    }
+}

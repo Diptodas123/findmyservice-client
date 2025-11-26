@@ -1,0 +1,87 @@
+.testimonials-grid {
+    margin-top: 1rem;
+}
+
+.testimonial-card {
+    background: var(--card-bg, #fff);
+    padding: 0;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(13, 38, 59, 0.06);
+    transition: transform 220ms ease, box-shadow 220ms ease;
+    overflow: hidden;
+}
+
+.testimonial-card-content {
+    padding: 0.9rem 0.9rem 1rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 160px;
+}
+
+.testimonial-quote {
+    font-style: italic;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary, rgba(13,38,59,0.9));
+    position: relative;
+}
+
+.testimonial-quote::before {
+    content: '“';
+    position: absolute;
+    left: -8px;
+    top: -18px;
+    font-size: 2.5rem;
+    color: rgba(13,38,59,0.06);
+}
+
+.testimonial-meta {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.testimonial-avatar {
+    background: linear-gradient(135deg, #e0e7ff, #f0f7ff);
+    color: #0b3d91;
+    flex-shrink: 0;
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 0.95rem !important;
+}
+
+.testimonial-author {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.testimonial-company {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted, rgba(13,38,59,0.55));
+    margin-top: 2px;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 48px rgba(13,38,59,0.12);
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .testimonial-card-content { min-height: 150px; }
+}
+
+@media (max-width: 600px) {
+        .testimonial-quote::before { left: -6px; top: -14px; font-size: 2rem; }
+}
+
+/* dark-mode overrides (root class pattern used elsewhere in the app) */
+.dark-mode .testimonial-card {
+    background: var(--card-bg, #0f1724);
+}
+
+/* color handled by MUI theme tokens via sx on Typography; no additional rules needed */
