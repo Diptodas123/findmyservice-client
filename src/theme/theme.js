@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, alpha } from '@mui/material/styles';
 
 export function buildTheme(mode = 'light') {
   const isLight = mode === 'light';
@@ -22,7 +22,19 @@ export function buildTheme(mode = 'light') {
     },
     shape: { borderRadius: 8 },
     components: {
-      MuiButton: { styleOverrides: { root: { textTransform: 'none' } } },
+      MuiButton: {
+        styleOverrides: {
+          root: { textTransform: 'none' },
+          outlined: ({ theme }) => ({
+            borderWidth: 2,
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.14)' : theme.palette.divider,
+            color: theme.palette.mode === 'dark' ? theme.palette.text.primary : undefined,
+            '&:hover': {
+              backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.04) : undefined
+            }
+          })
+        }
+      },
       MuiAppBar: { styleOverrides: { root: { transition: 'background-color .3s ease' } } }
     }
   });

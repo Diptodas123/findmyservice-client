@@ -1,14 +1,6 @@
 import { Typography } from '@mui/material';
 import ServiceGrid from '../ServiceGrid/ServiceGrid';
-
-const sampleServices = [
-    { serviceName: 'Home Cleaning' },
-    { serviceName: 'Plumbing' },
-    { serviceName: 'Electrician' },
-    { serviceName: 'AC Repair' },
-    { serviceName: 'Car Service' },
-    { serviceName: 'Personal Training' },
-];
+import { SAMPLE_SEVICES_FOR_RECOMMENDATION } from '../../../mockData';
 
 const RecommendedServices = () => {
 
@@ -21,7 +13,7 @@ const RecommendedServices = () => {
                     User, what services are you looking for today?
                 </Typography>
                 <ServiceGrid
-                    items={sampleServices}
+                    items={SAMPLE_SEVICES_FOR_RECOMMENDATION}
                     defaultImage={defaultImageUrl}
                     cardSize={180}
                 />

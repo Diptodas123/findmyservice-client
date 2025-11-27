@@ -1,22 +1,11 @@
 import { Typography } from '@mui/material';
 import ServiceCarousel from '../ServiceCarousel/ServiceCarousel';
-
-const sampleServiceProviders = [
-    { id: 1, serviceName: 'Abc Home Cleaning' },
-    { id: 2, serviceName: 'Xyz Plumbing Services' },
-    { id: 3, serviceName: 'QuickFix Electricians' },
-    { id: 4, serviceName: 'CoolAir AC Repair' },
-    { id: 5, serviceName: 'AutoCare Car Service' },
-    { id: 6, serviceName: 'FitLife Personal Training' },
-    { id: 7, serviceName: 'Sparkle Window Cleaning' },
-    { id: 8, serviceName: 'BrightFix Handyman' },
-    { id: 9, serviceName: 'FreshLook Landscaping' },
-    { id: 10, serviceName: 'TechPros IT Support' },
-];
-
+import { SAMPLE_SERVICE_PROVIDERS } from '../../../mockData';
 
 const PopularServiceProviders = () => {
 
+    const sampleServiceProviders = SAMPLE_SERVICE_PROVIDERS;
+    
     const defaultImageUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvwrZoNvnxGJhZgUhZy7v_T2fHzrlbF6vMiQ&s';
 
     if (!sampleServiceProviders || sampleServiceProviders.length === 0) return null;

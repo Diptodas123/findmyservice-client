@@ -9,14 +9,34 @@ import { ThemeModeProvider } from './theme/themeModeContext.jsx'
 import { ToastContainer } from 'react-toastify'
 
 const Root = () => {
-  const [mode, setMode] = useState('light');
-  const theme = useMemo(() => buildTheme(mode), [mode]);
+  const [modeState, setModeState] = useState(() => {
+    try {
+      return localStorage.getItem('themeMode') || 'light';
+    } catch (e) {
+      return 'light';
+    }
+  });
+
+  // wrapper setMode that persists to localStorage and supports functional updates
+  const setMode = (value) => {
+    setModeState((prev) => {
+      const next = typeof value === 'function' ? value(prev) : value;
+      try {
+        localStorage.setItem('themeMode', next);
+      } catch (e) {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  const theme = useMemo(() => buildTheme(modeState), [modeState]);
 
   return (
-    <ThemeModeProvider value={{ mode, setMode }}>
+    <ThemeModeProvider value={{ mode: modeState, setMode }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <ToastContainer />
+        <ToastContainer theme={modeState === 'dark' ? 'dark' : 'light'} />
         <App />
       </ThemeProvider>
     </ThemeModeProvider>
