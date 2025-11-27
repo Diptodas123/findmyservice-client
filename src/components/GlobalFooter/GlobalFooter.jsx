@@ -1,7 +1,5 @@
-
 import "./GlobalFooter.css";
 import {
-    ArrowUpward,
     ContactEmergency,
     Email,
     Facebook,
@@ -33,10 +31,6 @@ const GlobalFooter = () => {
     const footerTextPrimary = isLight ? 'common.white' : 'text.primary';
     const footerTextSecondary = isLight ? 'grey.300' : 'text.secondary';
 
-    const backToTop = () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
     return (
         <Box
             component="footer"
@@ -46,29 +40,6 @@ const GlobalFooter = () => {
                 borderTop: `1px solid ${theme.palette.divider}`,
                 mt: 6
             }}>
-            <Box
-                sx={{
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    py: 1.5,
-                    bgcolor: isLight ? 'info.main' : 'secondary.main',
-                    '&:hover': { opacity: 0.95 }
-                }}
-                onClick={backToTop}
-            >
-                <Typography
-                    variant="body2"
-                    sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        color: isLight ? 'common.white' : 'secondary.contrastText',
-                        fontWeight: 600
-                    }}>
-                    <ArrowUpward fontSize="small" /> Back to top
-                </Typography>
-            </Box>
-
             <Box sx={{ maxWidth: 1100, mx: 'auto', px: 3, py: 5 }}>
                 <Grid container spacing={4}>
                     <Grid item xs={12} md={4}>

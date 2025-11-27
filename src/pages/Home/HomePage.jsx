@@ -1,10 +1,10 @@
-import Banner from '../components/Banner/Banner';
+import Banner from '../../components/Banner/Banner';
 import './HomePage.css';
-import HowItWorks from '../components/HowItWorks/HowItWorks';
-import Testimonials from '../components/Testimonials/Testimonials';
-import RecommendedServices from '../components/RecommendedServices/RecommendedServices';
-import PopularServiceProviders from '../components/PopularServiceProviders/PopularServiceProviders';
-import NewsLetter from '../components/Newsletter/newsletter';
+import HowItWorks from '../../components/HowItWorks/HowItWorks';
+import Testimonials from '../../components/Testimonials/Testimonials';
+import RecommendedServices from '../../components/RecommendedServices/RecommendedServices';
+import PopularServiceProviders from '../../components/PopularServiceProviders/PopularServiceProviders';
+import NewsLetter from '../../components/Newsletter/newsletter';
 
 const HomePage = () => {
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -16,6 +16,7 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
+import toastMessage from '../../utils/toastMessage';
 
 export default function Signup() {
   const [userData, setUserData] = useState({
@@ -33,6 +34,12 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (error) {
+      toastMessage({ msg: error, type: 'error' });
+    }
+  }, [error]);
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -91,7 +98,10 @@ export default function Signup() {
       const data = await response.json();
       setLoading(false);
       if (response.ok && data.message) {
-        navigate("/login");
+        toastMessage({ msg: 'Registration successful! Redirecting to login...', type: 'success' });
+        setTimeout(() => {
+          navigate("/login");
+        }, 4000);
       } else {
         setError(data.error || "Registration failed");
       }
@@ -102,7 +112,7 @@ export default function Signup() {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', mt: 10 }}>
       <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 480, boxSizing: 'border-box' }}>
         <Typography variant="h5" gutterBottom><HowToRegIcon fontSize='large' /> Sign Up</Typography>
         <form onSubmit={handleSubmit}>
@@ -112,7 +122,7 @@ export default function Signup() {
             fullWidth
             margin="normal"
             value={userData.name}
-            onChange={(e)=> onChange({target: {name: 'name', value: e.target.value}})}
+            onChange={(e) => onChange({ target: { name: 'name', value: e.target.value } })}
             required
             autoComplete="name"
           />
@@ -123,7 +133,7 @@ export default function Signup() {
               id="role"
               value={userData.role}
               label="Register As"
-              onChange={(e) => onChange({target: {name: 'role', value: e.target.value}})}
+              onChange={(e) => onChange({ target: { name: 'role', value: e.target.value } })}
             >
               <MenuItem value="USER">User</MenuItem>
               <MenuItem value="PROVIDER">Provider</MenuItem>
@@ -135,7 +145,7 @@ export default function Signup() {
             fullWidth
             margin="normal"
             value={userData.email}
-            onChange={(e) => onChange({target: {name: 'email', value: e.target.value}})}
+            onChange={(e) => onChange({ target: { name: 'email', value: e.target.value } })}
             required
             error={!!emailError}
             helperText={emailError}
@@ -147,10 +157,10 @@ export default function Signup() {
             fullWidth
             margin="normal"
             value={userData.password}
-            onChange={(e) => onChange({target: {name: 'password', value: e.target.value}})}
+            onChange={(e) => onChange({ target: { name: 'password', value: e.target.value } })}
             required
             error={!!passwordError}
-            helperText={passwordError || 'Minimum 8 characters, include a letter, number, and special character.'}
+            helperText={passwordError || "Minimum 8 characters, include a letter, number, and special character (e.g. !@#$%^&*()_+-=[]{}|;:'.,<>/?`~)."}
             autoComplete="new-password"
             InputProps={{
               endAdornment: (
@@ -172,7 +182,7 @@ export default function Signup() {
             fullWidth
             margin="normal"
             value={userData.confirmPassword}
-            onChange={(e) => onChange({target: {name: 'confirmPassword', value: e.target.value}})}
+            onChange={(e) => onChange({ target: { name: 'confirmPassword', value: e.target.value } })}
             required
             error={!!confirmPasswordError}
             helperText={confirmPasswordError}
@@ -191,11 +201,6 @@ export default function Signup() {
               )
             }}
           />
-          {error && (
-            <Typography color="error" variant="body2" sx={{ mb: 1, ml: 1 }}>
-              {error}
-            </Typography>
-          )}
           <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>
             {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
           </Button>

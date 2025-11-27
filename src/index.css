@@ -11,3 +11,21 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Hide vertical scrollbar but keep scrolling functional */
+/* WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: none; /* hide scrollbar */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Ensure scrollable elements keep pointer events */
+body, #root {
+  -webkit-overflow-scrolling: touch;
+}
