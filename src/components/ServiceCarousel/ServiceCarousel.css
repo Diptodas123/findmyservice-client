@@ -1,0 +1,27 @@
+.sc-wrapper {
+    width: 100%;
+}
+
+.sc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px
+}
+
+.sc-controls {
+    display: flex;
+    gap: 4px
+}
+
+.sc-viewport {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    width: 100%;
+}
+
+.sc-track {
+    display: flex;
+}
+

@@ -1,0 +1,25 @@
+/* Newsletter section */
+.newsletter-container {
+	max-width: 960px;
+	margin: 0 auto;
+	text-align: center;
+}
+.newsletter-title {
+	margin: 0 0 0.25rem 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+}
+.newsletter-sub {
+	margin: 0 0 0.75rem 0;
+}
+.newsletter-form {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+@media (max-width: 600px) {
+	.newsletter-form { flex-direction: column; gap: 0.5rem; }
+	.newsletter-form .MuiTextField-root { width: 100%; }
+}
+

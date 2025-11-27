@@ -6,6 +6,7 @@ import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { buildTheme } from './theme/theme.js'
 import { ThemeModeProvider } from './theme/themeModeContext.jsx'
+import { ToastContainer } from 'react-toastify'
 
 const Root = () => {
   const [mode, setMode] = useState('light');
@@ -15,6 +16,7 @@ const Root = () => {
     <ThemeModeProvider value={{ mode, setMode }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <ToastContainer />
         <App />
       </ThemeProvider>
     </ThemeModeProvider>
