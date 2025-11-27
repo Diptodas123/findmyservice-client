@@ -5,7 +5,7 @@ import GlobalFooter from './components/GlobalFooter/GlobalFooter';
 import BackToTop from './components/BackToTop/BackToTop';
 import Login from './pages/Login/Login.jsx';
 import Signup from './pages/Signup/Signup.jsx';
-
+import ServiceProviderDetails from './pages/ServiceProviderDetails/ServiceProviderDetails.jsx';
 
 function App() {
   return (
@@ -15,6 +15,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />
       </Routes>
       <GlobalFooter />
       <BackToTop />
