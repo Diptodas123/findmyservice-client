@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
+import toastMessage from '../../utils/toastMessage';
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -20,6 +21,12 @@ export default function Login() {
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
+
+  useEffect(() => {
+    if (error) {
+      toastMessage({ msg: error, type: 'error' });
+    }
+  }, [error]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,7 +62,10 @@ export default function Login() {
       setLoading(false);
       if (response.ok && data.token) {
         localStorage.setItem('token', data.token);
-        navigate('/');
+        toastMessage({ msg: 'Login successful! Redirecting...', type: 'success' });
+        setTimeout(() => {
+          navigate('/');
+        }, 4000);
       } else {
         setError(data.error || 'Invalid credentials');
       }
@@ -120,7 +130,6 @@ export default function Login() {
               )
             }}
           />
-          {error && <Typography color="error" variant="body2" sx={{ mb: 1 }}>{error}</Typography>}
           <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>
             {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
           </Button>

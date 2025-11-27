@@ -1,9 +1,10 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Header from './components/GlobalHeader/Header';
-import HomePage from './pages/HomePage';
+import HomePage from './pages/Home/HomePage.jsx';
 import GlobalFooter from './components/GlobalFooter/GlobalFooter';
-import Login from './pages/Login.jsx';
-import Signup from './pages/Signup.jsx';
+import BackToTop from './components/BackToTop/BackToTop';
+import Login from './pages/Login/Login.jsx';
+import Signup from './pages/Signup/Signup.jsx';
 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
       </Routes>
       <GlobalFooter />
+      <BackToTop />
     </BrowserRouter>
   );
 }
