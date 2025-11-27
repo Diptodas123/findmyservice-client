@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, CircularProgress } from '@mui/material';
+import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('USER');
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -17,7 +18,7 @@ export default function Login() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setEmailError('');
     setPasswordError('');
@@ -35,17 +36,30 @@ export default function Login() {
     if (!valid) return;
 
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          role
+        })
+      });
+      const data = await response.json();
       setLoading(false);
-      // TODO: Replace with real authentication API call
-      if (email === 'user@example.com' && password === 'password') {
-        localStorage.setItem('token', 'demo-token');
+      if (response.ok && data.token) {
+        localStorage.setItem('token', data.token);
         navigate('/');
       } else {
-        setError('Invalid credentials');
+        setError(data.error || 'Invalid credentials');
       }
-    }, 1200);
+    } catch (err) {
+      setLoading(false);
+      setError('Network error. Please try again.');
+    }
   };
 
   return (
@@ -53,6 +67,19 @@ export default function Login() {
       <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 480, boxSizing: 'border-box' }}>
         <Typography variant="h5" gutterBottom>Login</Typography>
         <form onSubmit={handleSubmit}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="role-label">Login As</InputLabel>
+            <Select
+              labelId="role-label"
+              id="role"
+              value={role}
+              label="Login As"
+              onChange={e => setRole(e.target.value)}
+            >
+              <MenuItem value="USER">User</MenuItem>
+              <MenuItem value="PROVIDER">Provider</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             label="Email"
             type="email"

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, Checkbox, FormControlLabel, CircularProgress } from '@mui/material';
+import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, Checkbox, FormControlLabel, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 export default function Signup() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -16,6 +17,7 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState('USER');
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -28,7 +30,7 @@ export default function Signup() {
     return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/.test(password);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     let valid = true;
     setEmailError('');
@@ -37,6 +39,10 @@ export default function Signup() {
     setError('');
     setTermsError('');
 
+    if (!name.trim()) {
+      setError('Name is required');
+      valid = false;
+    }
     if (!validateEmail(email)) {
       setEmailError('Please enter a valid email address');
       valid = false;
@@ -56,13 +62,30 @@ export default function Signup() {
     if (!valid) return;
 
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/v1/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role
+        })
+      });
+      const data = await response.json();
       setLoading(false);
-      // TODO: Replace with real signup API call
-      localStorage.setItem('token', 'demo-token');
-      navigate('/');
-    }, 1200);
+      if (response.ok && data.message) {
+        navigate("/login");
+      } else {
+        setError(data.error || "Registration failed");
+      }
+    } catch (err) {
+      setLoading(false);
+      setError("Network error. Please try again.");
+    }
   };
 
   return (
@@ -70,6 +93,29 @@ export default function Signup() {
       <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 480, boxSizing: 'border-box' }}>
         <Typography variant="h5" gutterBottom>Sign Up</Typography>
         <form onSubmit={handleSubmit}>
+          <TextField
+            label="Name"
+            type="text"
+            fullWidth
+            margin="normal"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            autoComplete="name"
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="role-label">Register As</InputLabel>
+            <Select
+              labelId="role-label"
+              id="role"
+              value={role}
+              label="Register As"
+              onChange={e => setRole(e.target.value)}
+            >
+              <MenuItem value="USER">User</MenuItem>
+              <MenuItem value="PROVIDER">Provider</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             label="Email"
             type="email"
@@ -151,6 +197,11 @@ export default function Signup() {
           {termsError && (
             <Typography color="error" variant="body2" sx={{ mb: 1, ml: 1 }}>
               {termsError}
+            </Typography>
+          )}
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mb: 1, ml: 1 }}>
+              {error}
             </Typography>
           )}
           <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>
