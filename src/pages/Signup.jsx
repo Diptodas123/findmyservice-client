@@ -1,27 +1,40 @@
 import { useState } from 'react';
-import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, Checkbox, FormControlLabel, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  IconButton,
+  InputAdornment,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
+} from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
 
 export default function Signup() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [userData, setUserData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'USER',
+  });
   const [error, setError] = useState('');
-  const [termsError, setTermsError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState('USER');
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
-    // Simple email regex
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
@@ -30,6 +43,10 @@ export default function Signup() {
     return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/.test(password);
   };
 
+  const onChange = (e) => {
+    setUserData({ ...userData, [e.target.name]: e.target.value });
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     let valid = true;
@@ -37,28 +54,24 @@ export default function Signup() {
     setPasswordError('');
     setConfirmPasswordError('');
     setError('');
-    setTermsError('');
 
-    if (!name.trim()) {
+    if (!userData.name.trim()) {
       setError('Name is required');
       valid = false;
     }
-    if (!validateEmail(email)) {
+    if (!validateEmail(userData.email)) {
       setEmailError('Please enter a valid email address');
       valid = false;
     }
-    if (!validatePasswordStrength(password)) {
+    if (!validatePasswordStrength(userData.password)) {
       setPasswordError('Password must be at least 8 characters and include a letter, number, and special character');
       valid = false;
     }
-    if (password !== confirmPassword) {
+    if (userData.password !== userData.confirmPassword) {
       setConfirmPasswordError('Passwords do not match');
       valid = false;
     }
-    if (!termsAccepted) {
-      setTermsError('You must accept the Terms of Service and Privacy Policy');
-      valid = false;
-    }
+
     if (!valid) return;
 
     setLoading(true);
@@ -69,10 +82,10 @@ export default function Signup() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          name,
-          email,
-          password,
-          role
+          name: userData.name,
+          email: userData.email,
+          password: userData.password,
+          role: userData.role
         })
       });
       const data = await response.json();
@@ -91,15 +104,15 @@ export default function Signup() {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
       <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 480, boxSizing: 'border-box' }}>
-        <Typography variant="h5" gutterBottom>Sign Up</Typography>
+        <Typography variant="h5" gutterBottom><HowToRegIcon fontSize='large' /> Sign Up</Typography>
         <form onSubmit={handleSubmit}>
           <TextField
             label="Name"
             type="text"
             fullWidth
             margin="normal"
-            value={name}
-            onChange={e => setName(e.target.value)}
+            value={userData.name}
+            onChange={(e)=> onChange({target: {name: 'name', value: e.target.value}})}
             required
             autoComplete="name"
           />
@@ -108,9 +121,9 @@ export default function Signup() {
             <Select
               labelId="role-label"
               id="role"
-              value={role}
+              value={userData.role}
               label="Register As"
-              onChange={e => setRole(e.target.value)}
+              onChange={(e) => onChange({target: {name: 'role', value: e.target.value}})}
             >
               <MenuItem value="USER">User</MenuItem>
               <MenuItem value="PROVIDER">Provider</MenuItem>
@@ -121,8 +134,8 @@ export default function Signup() {
             type="email"
             fullWidth
             margin="normal"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            value={userData.email}
+            onChange={(e) => onChange({target: {name: 'email', value: e.target.value}})}
             required
             error={!!emailError}
             helperText={emailError}
@@ -133,8 +146,8 @@ export default function Signup() {
             type={showPassword ? 'text' : 'password'}
             fullWidth
             margin="normal"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            value={userData.password}
+            onChange={(e) => onChange({target: {name: 'password', value: e.target.value}})}
             required
             error={!!passwordError}
             helperText={passwordError || 'Minimum 8 characters, include a letter, number, and special character.'}
@@ -158,8 +171,8 @@ export default function Signup() {
             type={showConfirmPassword ? 'text' : 'password'}
             fullWidth
             margin="normal"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
+            value={userData.confirmPassword}
+            onChange={(e) => onChange({target: {name: 'confirmPassword', value: e.target.value}})}
             required
             error={!!confirmPasswordError}
             helperText={confirmPasswordError}
@@ -178,27 +191,6 @@ export default function Signup() {
               )
             }}
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={termsAccepted}
-                onChange={e => setTermsAccepted(e.target.checked)}
-                name="terms"
-                color="primary"
-              />
-            }
-            label={
-              <span>
-                I accept the <a href="#" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="#" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-              </span>
-            }
-            sx={{ mt: 2, mb: 0 }}
-          />
-          {termsError && (
-            <Typography color="error" variant="body2" sx={{ mb: 1, ml: 1 }}>
-              {termsError}
-            </Typography>
-          )}
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 1, ml: 1 }}>
               {error}
