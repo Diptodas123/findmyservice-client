@@ -1,5 +1,4 @@
 import toastMessage from './toastMessage';
-
 const DEFAULT_TIMEOUT = 15000; // 15s
 
 function buildUrl(base, path, query) {
