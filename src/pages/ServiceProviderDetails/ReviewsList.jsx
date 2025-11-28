@@ -3,9 +3,10 @@ import { Paper, Stack, Avatar, Tooltip, Box, Typography, Rating, Button } from '
 import { Person as PersonIcon } from '@mui/icons-material';
 
 const ReviewsList = ({ reviews = [], expandedReviewIds = [], toggleExpand }) => {
+
     return (
         <Stack spacing={2}>
-            {reviews.map((review, id) => (
+                {reviews.map((review, id) => (
                 <Paper key={id} sx={{ p: 2 }} elevation={0}>
                     <Stack direction="row" spacing={2} alignItems="flex-start">
                         <Tooltip title={`View ${review.user} profile`}>
@@ -24,7 +25,7 @@ const ReviewsList = ({ reviews = [], expandedReviewIds = [], toggleExpand }) => 
                                 </Stack>
                             </Stack>
                             <Typography variant="body2" color="text.primary"
-                                sx={{ mt: 1, maxHeight: expandedReviewIds.includes(review.id) ? 'none' : 72, overflow: 'hidden', position: 'relative' }}
+                                sx={{ mt: 1, maxHeight: expandedReviewIds.includes(id) ? 'none' : 72, overflow: 'hidden', position: 'relative' }}
                             >{review.comment}
                             </Typography>
                             {review.comment.length > 180 && (

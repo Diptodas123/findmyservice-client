@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/userSlice';
+import apiClient from '../../utils/apiClient';
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import toastMessage from '../../utils/toastMessage';
 
@@ -17,6 +20,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -45,34 +49,58 @@ export default function Login() {
     }
     if (!valid) return;
 
-    setLoading(true);
-    try {
-      const response = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: userData.email,
-          password: userData.password,
-          role: userData.role
-        })
-      });
-      const data = await response.json();
-      setLoading(false);
-      if (response.ok && data.token) {
-        localStorage.setItem('token', data.token);
-        toastMessage({ msg: 'Login successful! Redirecting...', type: 'success' });
-        setTimeout(() => {
-          navigate('/');
-        }, 4000);
-      } else {
-        setError(data.error || 'Invalid credentials');
+    const performLogin = async () => {
+      setLoading(true);
+      try {
+        const data = await apiClient.post('/api/v1/auth/login', { email: userData.email, password: userData.password, role: userData.role });
+        if (data?.token) {
+          localStorage.setItem('token', data.token);
+          const userId = data?.userId || data?.id || null;
+          const responseProfile = await getUserProfile(userId);
+          const profile = {
+            name: responseProfile?.name || '',
+            email: responseProfile?.email || '',
+            userId: userId,
+            role: responseProfile?.role || '',
+            phone: responseProfile?.phone || '',
+            addressLine1: responseProfile?.addressLine1 || '',
+            addressLine2: responseProfile?.addressLine2 || '',
+            city: responseProfile?.city || '',
+            state: responseProfile?.state || '',
+            zipCode: responseProfile?.zipCode || '',
+            profilePictureUrl: responseProfile?.profilePictureUrl || '',
+          };
+          try {
+            dispatch(setUser(profile));
+          } catch {
+            // ignore dispatch errors
+          }
+          setLoading(false);
+          toastMessage({ msg: 'Login successful! Redirecting...', type: 'success' });
+          setTimeout(() => {
+            navigate('/');
+          }, 4000);
+        } else {
+          setError(data?.error || 'Invalid credentials');
+        }
+      } catch (err) {
+        setLoading(false);
+        setError(err?.message || 'Network error. Please try again.');
       }
-    } catch (err) {
-      setLoading(false);
-      setError('Network error. Please try again.');
     }
+
+    const getUserProfile = async (userId) => {
+      if (!userId) return null;
+      try {
+        const data = await apiClient.get(`/api/v1/users/${userId}`);
+        return data;
+      } catch {
+        // ignore errors
+      }
+      return null;
+    };
+
+    performLogin();
   };
 
   return (
