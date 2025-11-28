@@ -52,7 +52,11 @@ export default function Login() {
     const performLogin = async () => {
       setLoading(true);
       try {
-        const data = await apiClient.post('/api/v1/auth/login', { email: userData.email, password: userData.password, role: userData.role });
+        const data = await apiClient.post('/api/v1/auth/login', {
+          email: userData.email,
+          password: userData.password,
+          role: userData.role
+        });
         if (data?.token) {
           localStorage.setItem('token', data.token);
           const userId = data?.userId || data?.id || null;
