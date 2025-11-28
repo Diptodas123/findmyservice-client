@@ -16,6 +16,8 @@ import {
     useMediaQuery
 } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearUser } from '../../store/userSlice';
 import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
@@ -44,11 +46,16 @@ const Header = () => {
     const toggleMode = () => setMode(mode === 'light' ? 'dark' : 'light');
 
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const loggedIn = Boolean(localStorage.getItem('token'));
+    const dispatch = useDispatch();
+    const userName = useSelector((s) => s.user?.profile?.name);
+    const cartCount = useSelector((s) => (s.cart?.items || []).length || 0);
+    const loggedIn = Boolean(localStorage.getItem('token')) || Boolean(userName);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        navigate('/');
+        dispatch(clearUser());
+        setDrawerOpen(false);
+        navigate('/login');
     };
 
     const toggleDrawer = (open) => () => setDrawerOpen(open);
@@ -242,6 +249,9 @@ const Header = () => {
                             >
                                 <ShoppingCartRoundedIcon className="nav-icon" />
                                 <span className="cart-label">Cart</span>
+                                {cartCount > 0 && (
+                                    <Box component="span" sx={{ ml: 1, bgcolor: 'secondary.main', color: 'common.white', px: .75, py: .25, borderRadius: 1, fontSize: 12 }}>{cartCount}</Box>
+                                )}
                             </Box>
                         </Box>
                     )}
