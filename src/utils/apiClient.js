@@ -1,3 +1,5 @@
+import toastMessage from './toastMessage';
+
 const DEFAULT_TIMEOUT = 15000; // 15s
 
 function buildUrl(base, path, query) {
@@ -52,11 +54,23 @@ async function request({ method = 'GET', path = '/', baseURL = '', query, body, 
         }
         return data;
     } catch (e) {
-        if (e.name === 'AbortError') {
+        if (e.name === 'AbortError' || e.code === 'ETIMEDOUT') {
             const err = new Error('Request timed out');
             err.code = 'ETIMEDOUT';
+            err.isNetworkError = true;
+            toastMessage({ msg: 'Network timeout. Please check your connection and try again.', type: 'error' });
             throw err;
         }
+        // other network or parse errors
+        if (e instanceof Error) {
+            e.isNetworkError = true;
+        } else {
+            const err = new Error('Network error');
+            err.isNetworkError = true;
+            toastMessage({ msg: 'Network error. Please check your connection.', type: 'error' });
+            throw err;
+        }
+        toastMessage({ msg: 'Network error. Please check your connection.', type: 'error' });
         throw e;
     }
 }

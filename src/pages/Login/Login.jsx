@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Button, TextField, Typography, Paper, IconButton, InputAdornment, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ export default function Login() {
     password: '',
     role: 'USER',
   });
-  const [error, setError] = useState('');
+  
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,17 +26,12 @@ export default function Login() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  useEffect(() => {
-    if (error) {
-      toastMessage({ msg: error, type: 'error' });
-    }
-  }, [error]);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEmailError('');
     setPasswordError('');
-    setError('');
     let valid = true;
 
     if (!validateEmail(userData.email)) {
@@ -85,11 +80,15 @@ export default function Login() {
             navigate('/');
           }, 4000);
         } else {
-          setError(data?.error || 'Invalid credentials');
+          const msg = data?.error || 'Invalid credentials';
+          toastMessage({ msg, type: 'error' });
         }
       } catch (err) {
         setLoading(false);
-        setError(err?.message || 'Network error. Please try again.');
+        const msg = err?.message || 'Network error. Please try again.';
+        if (!err?.isNetworkError) {
+          toastMessage({ msg, type: 'error' });
+        }
       }
     }
 
