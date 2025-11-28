@@ -7,6 +7,8 @@ import CssBaseline from '@mui/material/CssBaseline'
 import { buildTheme } from './theme/theme.js'
 import { ThemeModeProvider } from './theme/themeModeContext.jsx'
 import { ToastContainer } from 'react-toastify'
+import { Provider } from 'react-redux'
+import store from './store/store'
 
 const Root = () => {
   const [modeState, setModeState] = useState(() => {
@@ -37,7 +39,9 @@ const Root = () => {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <ToastContainer theme={modeState === 'dark' ? 'dark' : 'light'} />
-        <App />
+        <Provider store={store}>
+          <App />
+        </Provider>
       </ThemeProvider>
     </ThemeModeProvider>
   );

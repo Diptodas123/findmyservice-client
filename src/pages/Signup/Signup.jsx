@@ -17,6 +17,7 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import toastMessage from '../../utils/toastMessage';
+import apiClient from '../../utils/apiClient';
 
 export default function Signup() {
   const [userData, setUserData] = useState({
@@ -83,31 +84,24 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/v1/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: userData.name,
-          email: userData.email,
-          password: userData.password,
-          role: userData.role
-        })
+      const data = await apiClient.post('/api/v1/auth/register', {
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role
       });
-      const data = await response.json();
       setLoading(false);
-      if (response.ok && data.message) {
+      if (data && data.message) {
         toastMessage({ msg: 'Registration successful! Redirecting to login...', type: 'success' });
         setTimeout(() => {
           navigate("/login");
         }, 4000);
       } else {
-        setError(data.error || "Registration failed");
+        setError(data?.error || "Registration failed");
       }
     } catch (err) {
       setLoading(false);
-      setError("Network error. Please try again.");
+      setError(err?.message || "Network error. Please try again.");
     }
   };
 
