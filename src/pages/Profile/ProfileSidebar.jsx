@@ -4,7 +4,8 @@ import {
   LocationOn,
   Settings,
   AccountCircle,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  Delete
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import {
@@ -25,15 +26,37 @@ import {
   Button
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { clearUser } from '../../store/userSlice';
+import apiClient from '../../utils/apiClient';
+import toastMessage from '../../utils/toastMessage';
 
 const ProfileSidebar = ({ activeTab, setActiveTab, profilePicturePreview }) => {
   const theme = useTheme();
 
   const dispatch = useDispatch();
+  const profile = useSelector((s) => s.user?.profile || null);
   const navigate = useNavigate();
   const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+
+  const onDelete = async () => {
+    try {
+      await apiClient.del(`/api/v1/users/${profile?.userId}`);
+      localStorage.removeItem('token');
+      dispatch(clearUser());
+      toastMessage({ msg: 'Account deleted. Redirecting...', type: 'success' });
+      navigate('/signup');
+    } catch (err) {
+      console.error('Delete account failed', err);
+      if (!err?.isNetworkError) {
+        toastMessage({ msg: err.userMessage || 'Failed to delete account', type: 'error' });
+      }
+    } finally {
+      setDeleteOpen(false);
+    }
+  };
 
   const menuItems = [
     {
@@ -62,7 +85,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab, profilePicturePreview }) => {
     >
       <Box sx={{ textAlign: "center", mb: 3 }}>
         <Avatar
-          src={profilePicturePreview}
+          src={profilePicturePreview || profile?.profilePictureUrl || ''}
           sx={{
             width: 100,
             height: 100,
@@ -76,13 +99,13 @@ const ProfileSidebar = ({ activeTab, setActiveTab, profilePicturePreview }) => {
             )}`,
           }}
         >
-          {!profilePicturePreview && <AccountCircle sx={{ fontSize: 80 }} />}
+          {!profilePicturePreview && !profile?.profilePictureUrl && <AccountCircle sx={{ fontSize: 80 }} />}
         </Avatar>
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          John Doe
+          {profile ? (profile.firstName || profile.name ? `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || profile.name : profile.username) : 'John Doe'}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          john.doe@example.com
+          {profile?.email || '—'}
         </Typography>
       </Box>
 
@@ -137,6 +160,14 @@ const ProfileSidebar = ({ activeTab, setActiveTab, profilePicturePreview }) => {
             <ListItemText primary="Logout" />
           </ListItemButton>
         </ListItem>
+        <ListItem disablePadding sx={{ mt: 1 }}>
+          <ListItemButton onClick={() => setDeleteOpen(true)}>
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <Delete sx={{ color: 'error.main' }} />
+            </ListItemIcon>
+            <ListItemText primary="Delete Account" primaryTypographyProps={{ color: 'error.main' }} />
+          </ListItemButton>
+        </ListItem>
       </List>
       <Dialog open={logoutOpen} onClose={() => setLogoutOpen(false)}>
         <DialogTitle>Confirm Logout</DialogTitle>
@@ -150,6 +181,17 @@ const ProfileSidebar = ({ activeTab, setActiveTab, profilePicturePreview }) => {
             dispatch(clearUser());
             navigate('/login');
           }}>Logout</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogContent>
+          <Typography>This will permanently delete your account and all associated data. This action cannot be undone.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={onDelete}>Delete</Button>
         </DialogActions>
       </Dialog>
     </Paper>

@@ -49,6 +49,20 @@ async function request({ method = 'GET', path = '/', baseURL = '', query, body, 
             const err = new Error(data?.error || data?.message || `HTTP ${res.status}`);
             err.status = res.status;
             err.response = data;
+
+            // derive a user-friendly message
+            if (res.status >= 500) {
+                err.userMessage = 'Something went wrong on our side. Please try again later.';
+            } else if (res.status === 401) {
+                err.userMessage = 'You are not authorized. Please log in again.';
+            } else if (res.status === 403) {
+                err.userMessage = 'You do not have permission to perform this action.';
+            } else if (res.status >= 400 && data?.message) {
+                err.userMessage = data.message;
+            } else {
+                err.userMessage = `Request failed (status ${res.status}). Please try again.`;
+            }
+
             throw err;
         }
         return data;
@@ -60,17 +74,20 @@ async function request({ method = 'GET', path = '/', baseURL = '', query, body, 
             toastMessage({ msg: 'Network timeout. Please check your connection and try again.', type: 'error' });
             throw err;
         }
-        // other network or parse errors
+        if (e instanceof Error && (e.status || typeof e.status === 'number')) {
+            throw e;
+        }
+
         if (e instanceof Error) {
             e.isNetworkError = true;
-        } else {
-            const err = new Error('Network error');
-            err.isNetworkError = true;
             toastMessage({ msg: 'Network error. Please check your connection.', type: 'error' });
-            throw err;
+            throw e;
         }
+
+        const err = new Error('Network error');
+        err.isNetworkError = true;
         toastMessage({ msg: 'Network error. Please check your connection.', type: 'error' });
-        throw e;
+        throw err;
     }
 }
 

@@ -36,7 +36,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  
+  useEffect(() => {
+  }, [error]);
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -97,7 +98,7 @@ export default function Signup() {
       }
     } catch (err) {
       setLoading(false);
-      const msg = err?.message || "Network error. Please try again.";
+      const msg = err?.userMessage || err?.message || "Network error. Please try again.";
       setError(msg);
       if (!err?.isNetworkError) {
         toastMessage({ msg, type: 'error' });

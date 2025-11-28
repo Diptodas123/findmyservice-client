@@ -85,7 +85,7 @@ export default function Login() {
         }
       } catch (err) {
         setLoading(false);
-        const msg = err?.message || 'Network error. Please try again.';
+        const msg = err?.userMessage || err?.message || 'Network error. Please try again.';
         if (!err?.isNetworkError) {
           toastMessage({ msg, type: 'error' });
         }
