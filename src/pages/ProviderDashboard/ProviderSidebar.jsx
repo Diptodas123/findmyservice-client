@@ -15,7 +15,8 @@ import {
   Event as EventIcon,
   Home as HomeIcon,
   RateReview as RateReviewIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Assessment as AssessmentIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 260;
@@ -25,6 +26,7 @@ const ITEMS = [
   { key: 'services', label: 'Services', Icon: ListIcon },
   { key: 'bookings', label: 'Bookings', Icon: EventIcon },
   { key: 'reviews', label: 'Reviews', Icon: RateReviewIcon },
+  { key: 'reports', label: 'Reports', Icon: AssessmentIcon },
   { key: 'details', label: 'Profile', Icon: PersonIcon }
 ];
 

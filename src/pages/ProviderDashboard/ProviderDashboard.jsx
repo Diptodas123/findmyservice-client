@@ -7,6 +7,7 @@ import ServicesList from './ServicesList';
 import BookingsList from './BookingsList';
 import ReviewsManagement from './ReviewsManagement';
 import Analytics from './Analytics';
+import Reports from './Reports';
 import ProviderHomeView from './ProviderHomeView';
 import { MOCK_PROVIDER } from '../../../mockData';
 import { buildTheme } from '../../theme/theme.js';
@@ -38,6 +39,8 @@ const ProviderDashboard = () => {
                 return <BookingsList provider={provider} />;
             case 'reviews':
                 return <ReviewsManagement provider={provider} />;
+            case 'reports':
+                return <Reports provider={provider} />;
             default:
                 return <div>Welcome to the Provider Dashboard</div>;
         }
