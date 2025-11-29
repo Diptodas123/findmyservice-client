@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   TextField,
   IconButton,
   Fab,
@@ -23,7 +24,10 @@ import {
   Stack,
   Tooltip,
   Menu,
-  MenuItem
+  MenuItem,
+  Select,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -31,7 +35,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   LocationOn as LocationOnIcon,
-  AttachMoney as AttachMoneyIcon,
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   FavoriteBorder as FavoriteBorderIcon,
@@ -44,58 +47,166 @@ const ServicesList = ({ provider }) => {
   const initialServices = useMemo(() => (provider?.services || MOCK_PROVIDER.services || []), [provider]);
   const [services, setServices] = useState(initialServices);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', cost: '', location: '', imageUrl: '' });
-  const [attrs, setAttrs] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
+  const [form, setForm] = useState({ 
+    name: '', 
+    description: '', 
+    cost: '', 
+    location: '', 
+    imageUrl: '', 
+    availability: 'AVAILABLE', 
+    warrantyPeriodMonths: '', 
+    active: true 
+  });
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
   const [query, setQuery] = useState('');
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuServiceId, setMenuServiceId] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState(null);
   const handleCloseMenu = () => {
     setMenuAnchor(null);
     setMenuServiceId(null);
   };
+
   const handleMenuEdit = () => {
-    // TODO: open edit dialog for menuServiceId
-    console.log('edit', menuServiceId);
-    handleCloseMenu();
-  };
-  const handleMenuDelete = () => {
-    // TODO: confirm and delete service by menuServiceId
-    setServices(s => s.filter(x => x.id !== menuServiceId));
+    const serviceToEdit = services.find(s => s.id === menuServiceId);
+    if (serviceToEdit) {
+      setEditMode(true);
+      setEditingServiceId(menuServiceId);
+      setForm({
+        name: serviceToEdit.name || '',
+        description: serviceToEdit.description || '',
+        cost: serviceToEdit.cost || '',
+        location: serviceToEdit.location || '',
+        imageUrl: serviceToEdit.imageUrl || '',
+        availability: serviceToEdit.availability || 'AVAILABLE',
+        warrantyPeriodMonths: serviceToEdit.warrantyPeriodMonths || '',
+        active: serviceToEdit.active !== undefined ? serviceToEdit.active : true
+      });
+      setOpen(true);
+    }
     handleCloseMenu();
   };
 
-  const handleOpen = () => setOpen(true);
+  const handleMenuDelete = () => {
+    const service = services.find(s => s.id === menuServiceId);
+    if (service) {
+      setServiceToDelete(service);
+      setDeleteDialogOpen(true);
+    }
+    handleCloseMenu();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (serviceToDelete) {
+      try {
+        // Delete service via API
+        // await apiClient.del(`/api/v1/services/${serviceToDelete.id}`);
+        
+        // For now, delete locally (uncomment above when backend is connected)
+        setServices(s => s.filter(x => x.id !== serviceToDelete.id));
+        setDeleteDialogOpen(false);
+        setServiceToDelete(null);
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        alert('Failed to delete service. Please try again.');
+      }
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setServiceToDelete(null);
+  };
+
+  const handleOpen = () => {
+    setEditMode(false);
+    setEditingServiceId(null);
+    setOpen(true);
+  };
+
   const handleClose = () => {
     setOpen(false);
-    setForm({ name: '', description: '', cost: '', location: '', imageUrl: '' });
-    setAttrs([]);
+    setEditMode(false);
+    setEditingServiceId(null);
+    setForm({ 
+      name: '', 
+      description: '', 
+      cost: '', 
+      location: '', 
+      imageUrl: '', 
+      availability: 'AVAILABLE', 
+      warrantyPeriodMonths: '', 
+      active: true 
+    });
   };
 
-  const handleAddAttr = () => setAttrs((a) => [...a, { id: Date.now(), name: '', value: '', type: 'string' }]);
-  const handleAttrChange = (id, key, value) => setAttrs((a) => a.map(x => x.id === id ? { ...x, [key]: value } : x));
-  const handleRemoveAttr = (id) => setAttrs((a) => a.filter(x => x.id !== id));
-
-  const handleCreate = () => {
-    const newService = {
-      id: `s-${Date.now()}`,
-      providerId: provider?.providerId || MOCK_PROVIDER.providerId,
-      name: form.name,
+  const handleSave = async () => {
+    // Prepare service data according to backend API structure
+    const serviceData = {
+      providerId: {
+        providerId: provider?.providerId || MOCK_PROVIDER.providerId
+      },
+      serviceName: form.name,
       description: form.description,
       cost: parseFloat(form.cost) || 0,
       location: form.location,
+      availability: form.availability || 'AVAILABLE',
+      warrantyPeriodMonths: form.warrantyPeriodMonths ? parseInt(form.warrantyPeriodMonths) : null,
       imageUrl: form.imageUrl || '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      active: true,
-      avgRating: 0,
-      totalRatings: 0,
-      attributes: attrs.map(a => ({ attributeId: `attr-${a.id}`, serviceId: `s-${Date.now()}`, attributeName: a.name, attributeValue: a.value, valueType: a.type, createdAt: new Date().toISOString() }))
+      active: form.active
     };
 
-    setServices((s) => [newService, ...s]);
-    handleClose();
+    try {
+      if (editMode && editingServiceId) {
+        // Update existing service via API
+        // const response = await apiClient.put(`/api/v1/services/${editingServiceId}`, serviceData);
+        
+        // For now, update locally (uncomment above when backend is connected)
+        setServices((s) =>
+          s.map((service) =>
+            service.id === editingServiceId
+              ? {
+                  ...service,
+                  name: form.name,
+                  description: form.description,
+                  cost: parseFloat(form.cost) || 0,
+                  location: form.location,
+                  imageUrl: form.imageUrl || service.imageUrl,
+                  updatedAt: new Date().toISOString()
+                }
+              : service
+          )
+        );
+      } else {
+        // Create new service via API
+        // const response = await apiClient.post('/api/v1/services', serviceData);
+        
+        // For now, create locally (uncomment above when backend is connected)
+        const newService = {
+          id: `s-${Date.now()}`,
+          providerId: provider?.providerId || MOCK_PROVIDER.providerId,
+          name: form.name,
+          description: form.description,
+          cost: parseFloat(form.cost) || 0,
+          location: form.location,
+          imageUrl: form.imageUrl || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          active: true,
+          avgRating: 0,
+          totalRatings: 0
+        };
+        setServices((s) => [newService, ...s]);
+      }
+      handleClose();
+    } catch (error) {
+      console.error('Error saving service:', error);
+      alert('Failed to save service. Please try again.');
+    }
   };
 
   return (
@@ -154,7 +265,7 @@ const ServicesList = ({ provider }) => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Chip label={`${svc.location}`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.12)', color: 'common.white', borderRadius: 1 }} />
                       </Box>
-                      <Chip label={`$${svc.cost}`} size="small" sx={{ bgcolor: 'background.paper', color: 'text.primary', fontWeight: 700 }} icon={<AttachMoneyIcon />} />
+                      <Chip label={`₹${svc.cost}`} size="small" sx={{ bgcolor: 'background.paper', color: 'text.primary', fontWeight: 700 }} />
                     </Box>
                   </Box>
                 </CardActionArea>
@@ -208,13 +319,65 @@ const ServicesList = ({ provider }) => {
       </Fab>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New Service</DialogTitle>
+        <DialogTitle>{editMode ? 'Edit Service' : 'Create New Service'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'grid', gap: 2, mt: 1 }}>
-            <TextField label="Service Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} fullWidth />
-            <TextField label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} fullWidth multiline rows={3} />
-            <TextField label="Cost" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} fullWidth InputProps={{ startAdornment: (<InputAdornment position="start"><AttachMoneyIcon /></InputAdornment>) }} />
-            <TextField label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} fullWidth />
+            <TextField 
+              label="Service Name" 
+              value={form.name} 
+              onChange={(e) => setForm({ ...form, name: e.target.value })} 
+              fullWidth 
+              required
+              helperText="Max 160 characters"
+            />
+            <TextField 
+              label="Description" 
+              value={form.description} 
+              onChange={(e) => setForm({ ...form, description: e.target.value })} 
+              fullWidth 
+              multiline 
+              rows={3}
+              helperText="Detailed description of the service"
+            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField 
+                label="Cost" 
+                value={form.cost} 
+                onChange={(e) => setForm({ ...form, cost: e.target.value })} 
+                fullWidth 
+                required
+                type="number"
+                InputProps={{ startAdornment: (<InputAdornment position="start">₹</InputAdornment>) }}
+                helperText="Must be greater than 0"
+              />
+              <TextField
+                label="Warranty (Months)"
+                value={form.warrantyPeriodMonths}
+                onChange={(e) => setForm({ ...form, warrantyPeriodMonths: e.target.value })}
+                fullWidth
+                type="number"
+                helperText="Optional warranty period"
+              />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField 
+                label="Location" 
+                value={form.location} 
+                onChange={(e) => setForm({ ...form, location: e.target.value })} 
+                fullWidth
+                helperText="Max 120 characters"
+              />
+              <TextField
+                select
+                label="Availability"
+                value={form.availability}
+                onChange={(e) => setForm({ ...form, availability: e.target.value })}
+                fullWidth
+              >
+                <MenuItem value="AVAILABLE">Available</MenuItem>
+                <MenuItem value="UNAVAILABLE">Unavailable</MenuItem>
+              </TextField>
+            </Box>
 
             <Box>
               <Typography variant="subtitle2">Image</Typography>
@@ -246,31 +409,54 @@ const ServicesList = ({ provider }) => {
               </Box>
             </Box>
 
-            <Box>
-              <Typography variant="subtitle2">Attributes</Typography>
-              {attrs.map(a => (
-                <Box key={a.id} sx={{ display: 'flex', gap: 1, mt: 1, alignItems: 'center' }}>
-                  <TextField placeholder="Name" value={a.name} onChange={(e) => handleAttrChange(a.id, 'name', e.target.value)} sx={{ flex: 1 }} />
-                  <TextField placeholder="Value" value={a.value} onChange={(e) => handleAttrChange(a.id, 'value', e.target.value)} sx={{ flex: 1 }} />
-                  <TextField placeholder="Type" value={a.type} onChange={(e) => handleAttrChange(a.id, 'type', e.target.value)} sx={{ width: 120 }} />
-                  <IconButton onClick={() => handleRemoveAttr(a.id)} size="small">✕</IconButton>
-                </Box>
-              ))}
-              <Button onClick={handleAddAttr} size="small" sx={{ mt: 1 }}>Add attribute</Button>
-            </Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.active}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                />
+              }
+              label="Active Status"
+              sx={{ mt: 1 }}
+            />
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
               <Button onClick={handleClose}>Cancel</Button>
-              <Button variant="contained" onClick={handleCreate}>Create</Button>
+              <Button variant="contained" onClick={handleSave}>
+                {editMode ? 'Save Changes' : 'Create'}
+              </Button>
             </Box>
           </Box>
         </DialogContent>
       </Dialog>
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}>
-        <MenuItem onClick={handleMenuEdit}><EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit</MenuItem>
-        <MenuItem onClick={handleMenuDelete}><DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete</MenuItem>
+        <MenuItem onClick={handleMenuEdit}>
+          <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit
+        </MenuItem>
+        <MenuItem onClick={handleMenuDelete} sx={{ color: 'error.main' }}>
+          <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete
+        </MenuItem>
       </Menu>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            Are you sure you want to delete the service <strong>"{serviceToDelete?.name}"</strong>?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };
