@@ -107,7 +107,7 @@ export default function Login() {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+    <Box className="login-bg" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', position: 'relative' }}>
       <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 480, boxSizing: 'border-box' }}>
         <Typography variant="h5" gutterBottom><PermIdentityIcon fontSize='large' /> Login</Typography>
         <form onSubmit={handleSubmit}>
