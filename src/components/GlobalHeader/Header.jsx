@@ -13,23 +13,25 @@ import {
     ListItemText,
     ListItemIcon,
     Divider,
-    useMediaQuery
+    useMediaQuery,
+    Avatar,
+    Typography
 } from '@mui/material';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { clearUser } from '../../store/userSlice';
-import { useTheme } from '@mui/material/styles';
-import MenuIcon from '@mui/icons-material/Menu';
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import ContactSupportRoundedIcon from '@mui/icons-material/ContactSupportRounded';
-import CloseIcon from '@mui/icons-material/Close';
-import LogoutIcon from '@mui/icons-material/Logout';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
+import {
+    Menu as MenuIcon,
+    HomeRounded as HomeRoundedIcon,
+    ContactSupportRounded as ContactSupportRoundedIcon,
+    Close as CloseIcon,
+    PersonOutline as PersonOutlineIcon,
+    LightModeOutlined as LightModeOutlinedIcon,
+    DarkModeOutlined as DarkModeOutlinedIcon,
+    ShoppingCartRounded as ShoppingCartRoundedIcon,
+    Search as SearchIcon
+} from '@mui/icons-material';
 import { useThemeMode } from '../../theme/useThemeMode.js';
-import SearchIcon from '@mui/icons-material/Search';
+import { Link, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useTheme } from '@mui/material/styles';
 
 const navItems = [
     { label: 'Home', path: '/', Icon: HomeRoundedIcon },
@@ -38,25 +40,16 @@ const navItems = [
 ];
 
 const Header = () => {
-    const navigate = useNavigate();
     const location = useLocation();
     const theme = useTheme();
     const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
     const { mode, setMode } = useThemeMode();
     const toggleMode = () => setMode(mode === 'light' ? 'dark' : 'light');
-
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const dispatch = useDispatch();
-    const userName = useSelector((s) => s.user?.profile?.name);
+    const user = useSelector((s) => s.user?.profile || null);
+    const userName = user?.name;
     const cartCount = useSelector((s) => (s.cart?.items || []).length || 0);
     const loggedIn = Boolean(localStorage.getItem('token')) || Boolean(userName);
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        dispatch(clearUser());
-        setDrawerOpen(false);
-        navigate('/login');
-    };
 
     const toggleDrawer = (open) => () => setDrawerOpen(open);
 
@@ -78,9 +71,22 @@ const Header = () => {
                         alt="FindMyService logo"
                         className="drawer-logo-img"
                     />
-                    <IconButton aria-label="close navigation" onClick={toggleDrawer(false)}>
-                        <CloseIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <IconButton aria-label="close navigation" onClick={toggleDrawer(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                        {user && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pr: 1 }}>
+                                <Avatar src={user.profilePictureUrl || undefined} sx={{ width: 44, height: 44 }}>
+                                    {!user.profilePictureUrl && (user.name || 'U')[0]}
+                                </Avatar>
+                                <Box sx={{ textAlign: 'right' }}>
+                                    <Typography sx={{ fontWeight: 700 }}>{user.name}</Typography>
+                                    <Typography variant="caption" color="text.secondary">View Profile</Typography>
+                                </Box>
+                            </Box>
+                        )}
+                    </Box>
                 </Box>
             </Box>
             <Divider />
@@ -122,15 +128,20 @@ const Header = () => {
                     </Button>
                 </Box>
             ) : (
-                <Button
-                    variant="outlined"
-                    sx={{ px: "16px", width: "280px" }}
-                    startIcon={<LogoutIcon />}
-                    onClick={handleLogout}
-                    fullWidth
-                >
-                    Logout
-                </Button>
+                <List>
+                    <ListItem disablePadding>
+                        <ListItemButton
+                            component={Link}
+                            to="/profile"
+                            onClick={toggleDrawer(false)}
+                        >
+                            <ListItemIcon className="list-icon">
+                                <PersonOutlineIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Profile" />
+                        </ListItemButton>
+                    </ListItem>
+                </List>
             )}
             <Box
                 component={Link}
@@ -227,15 +238,13 @@ const Header = () => {
                                     Login / Sign Up
                                 </Button>
                             ) : (
-                                <Button
-                                    onClick={handleLogout}
-                                    variant="outlined"
-                                    color="inherit"
-                                    startIcon={<PersonOutlineIcon />}
-                                    className="logout-btn auth-btn"
-                                >
-                                    Logout
-                                </Button>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <IconButton component={Link} to="/profile" aria-label="profile" sx={{ p: 0 }}>
+                                        <Avatar src={user?.profilePictureUrl || undefined} sx={{ width: 40, height: 40 }}>
+                                            {!user?.profilePictureUrl && (user?.name || 'U')[0]}
+                                        </Avatar>
+                                    </IconButton>
+                                </Box>
                             )}
                             <Box
                                 component={Link}
@@ -260,6 +269,7 @@ const Header = () => {
             <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
                 {drawerContent}
             </Drawer>
+
         </>
     );
 };

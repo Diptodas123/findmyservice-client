@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Header from './components/GlobalHeader/Header';
 import HomePage from './pages/Home/HomePage.jsx';
+import ProfilePage from './pages/Profile/ProfilePage.jsx';
 import GlobalFooter from './components/GlobalFooter/GlobalFooter';
 import BackToTop from './components/BackToTop/BackToTop';
 import Login from './pages/Login/Login.jsx';
@@ -17,6 +18,7 @@ function App() {
       <Box component="main" sx={{ minHeight: 'calc(100vh - 160px)' }}>
         <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />

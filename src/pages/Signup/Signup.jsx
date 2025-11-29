@@ -37,9 +37,6 @@ export default function Signup() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (error) {
-      toastMessage({ msg: error, type: 'error' });
-    }
   }, [error]);
 
   const validateEmail = (email) => {
@@ -101,7 +98,11 @@ export default function Signup() {
       }
     } catch (err) {
       setLoading(false);
-      setError(err?.message || "Network error. Please try again.");
+      const msg = err?.userMessage || err?.message || "Network error. Please try again.";
+      setError(msg);
+      if (!err?.isNetworkError) {
+        toastMessage({ msg, type: 'error' });
+      }
     }
   };
 
