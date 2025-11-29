@@ -6,6 +6,7 @@ import ProviderSidebar from './ProviderSidebar';
 import ServicesList from './ServicesList';
 import BookingsList from './BookingsList';
 import ReviewsManagement from './ReviewsManagement';
+import Analytics from './Analytics';
 import ProviderHomeView from './ProviderHomeView';
 import { MOCK_PROVIDER } from '../../../mockData';
 import { buildTheme } from '../../theme/theme.js';
@@ -28,6 +29,7 @@ const ProviderDashboard = () => {
     const renderView = () => {
         switch (view) {
             case 'home':
+                return <Analytics provider={provider} />;
             case 'details':
                 return <ProviderHomeView provider={provider} setProvider={setProvider} hideHero onCreateService={() => setView('services')} onViewBookings={() => setView('bookings')} />;
             case 'services':

@@ -14,16 +14,18 @@ import {
   List as ListIcon,
   Event as EventIcon,
   Home as HomeIcon,
-  RateReview as RateReviewIcon
+  RateReview as RateReviewIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 260;
 
 const ITEMS = [
-  { key: 'home', label: 'Home', Icon: HomeIcon },
+  { key: 'home', label: 'Analytics', Icon: HomeIcon },
   { key: 'services', label: 'Services', Icon: ListIcon },
   { key: 'bookings', label: 'Bookings', Icon: EventIcon },
-  { key: 'reviews', label: 'Reviews', Icon: RateReviewIcon }
+  { key: 'reviews', label: 'Reviews', Icon: RateReviewIcon },
+  { key: 'details', label: 'Profile', Icon: PersonIcon }
 ];
 
 const ProviderSidebar = ({
