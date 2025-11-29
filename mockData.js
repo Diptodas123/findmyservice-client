@@ -1,14 +1,14 @@
 
 export const MOCK_PROVIDER = {
-    providerId: 12345,
-    providerName: 'ABC Services',
-    email: 'john.doe@example.com',
-    phone: '+1-555-123-4567',
-    addressLine1: '12 Baker Street',
-    addressLine2: 'Suite 4B',
-    city: 'Metropolis',
-    state: 'CA',
-    zipCode: '94016',
+    providerId: 101,
+    providerName: 'ProFix Plumbing',
+    email: 'contact@profixplumbing.com',
+    phone: '+91-98765-43210',
+    addressLine1: '123 MG Road',
+    addressLine2: 'Near Metro Station',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    zipCode: '400001',
     createdAt: new Date().toISOString(),
     profilePictureUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeyHKd8ng_bUjfxGTGplWC9kMFLmxqTMDn53Fwk50MRU1fSFAwrd95PNzHLcTpPDCT4kw&usqp=CAU',
     imageUrls: [
@@ -18,28 +18,94 @@ export const MOCK_PROVIDER = {
     ],
     services: [
         {
-            id: 's1',
-            name: 'General Plumbing',
-            description: 'Full-service plumbing including drains, taps, installations and preventative maintenance. We handle both residential and commercial jobs with quick turnarounds and transparent pricing.',
-            imageUrl: 'https://atmosclear.biz/wp-content/uploads/2019/07/Atmosclear-Domestic-Plumbing.jpg'
+            id: 1,
+            name: 'Plumbing Leak Repair',
+            description: 'Expert plumbing services for leak detection and repair. Fast response time and guaranteed quality work.',
+            imageUrl: 'https://atmosclear.biz/wp-content/uploads/2019/07/Atmosclear-Domestic-Plumbing.jpg',
+            price: 1500
         },
         {
-            id: 's2',
-            name: 'Emergency Repairs',
-            description: '24/7 emergency response for burst pipes, gas leaks, and urgent repairs. Certified technicians arrive fast and secure the issue to prevent further damage.',
-            imageUrl: 'https://micromain.com/wp-content/uploads/Emergency.png'
+            id: 2,
+            name: 'Emergency Plumbing',
+            description: '24/7 emergency response for burst pipes, gas leaks, and urgent repairs. Certified technicians arrive fast.',
+            imageUrl: 'https://micromain.com/wp-content/uploads/Emergency.png',
+            price: 2500
         },
         {
-            id: 's3',
+            id: 3,
             name: 'Water Heater Installation',
-            description: 'Installation and replacement of tank and tankless water heaters with energy-efficient options and warranty-backed workmanship.',
-            imageUrl: 'https://trusteyman.com/wp-content/uploads/2018/05/Water-heater-installation-dos-and-donts.jpeg'
+            description: 'Installation and replacement of tank and tankless water heaters with energy-efficient options and warranty.',
+            imageUrl: 'https://trusteyman.com/wp-content/uploads/2018/05/Water-heater-installation-dos-and-donts.jpeg',
+            price: 8000
+        },
+        {
+            id: 4,
+            name: 'Drain Cleaning',
+            description: 'Professional drain cleaning services for kitchen, bathroom, and outdoor drains using modern equipment.',
+            imageUrl: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80',
+            price: 1200
         }
     ],
-    avgRating: 4.6,
+    avgRating: 4.8,
     totalRatings: 128,
     description: 'Experienced professional offering reliable plumbing and repair services. Fast response, fair pricing, and a satisfaction guarantee.'
 };
+
+// Generate provider details based on serviceId
+export const getProviderById = (providerId) => {
+    const providerIdNum = Number(providerId);
+    
+    // Find all services for this provider
+    const providerServices = MOCK_SEARCH_SERVICES.filter(
+        service => service.providerId?.providerId === providerIdNum
+    );
+    
+    if (providerServices.length === 0) {
+        return null;
+    }
+    
+    const firstService = providerServices[0];
+    const providerName = firstService.providerId.providerName;
+    
+    // Calculate average rating
+    const avgRating = providerServices.reduce((sum, s) => sum + s.avgRating, 0) / providerServices.length;
+    
+    return {
+        providerId: providerIdNum,
+        providerName: providerName,
+        email: `contact@${providerName.toLowerCase().replace(/\s+/g, '')}.com`,
+        phone: `+91-${98000 + providerIdNum}-${10000 + providerIdNum}`,
+        addressLine1: `${providerIdNum} Business Park`,
+        addressLine2: 'Commercial Area',
+        city: firstService.location,
+        state: firstService.location === 'Mumbai' ? 'Maharashtra' : 
+               firstService.location === 'Delhi' ? 'Delhi' : 
+               firstService.location === 'Bangalore' ? 'Karnataka' : 
+               firstService.location === 'Pune' ? 'Maharashtra' : 
+               firstService.location === 'Chennai' ? 'Tamil Nadu' : 
+               firstService.location === 'Hyderabad' ? 'Telangana' : 
+               firstService.location === 'Kolkata' ? 'West Bengal' : 'India',
+        zipCode: `${400000 + providerIdNum}`,
+        createdAt: new Date(Date.now() - providerIdNum * 24 * 60 * 60 * 1000).toISOString(),
+        profilePictureUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeyHKd8ng_bUjfxGTGplWC9kMFLmxqTMDn53Fwk50MRU1fSFAwrd95PNzHLcTpPDCT4kw&usqp=CAU',
+        imageUrls: [
+            firstService.imageUrl,
+            'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1200&q=80',
+            'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1200&q=80'
+        ],
+        services: providerServices.map(s => ({
+            id: s.serviceId,
+            name: s.serviceName,
+            description: s.description,
+            imageUrl: s.imageUrl,
+            price: s.cost
+        })),
+        avgRating: Number(avgRating.toFixed(1)),
+        totalRatings: Math.floor(Math.random() * 100) + 50,
+        description: `Professional ${providerName} offering quality services in ${firstService.location}. Experienced team with customer satisfaction guarantee.`
+    };
+};
+
 
 export const MOCK_REVIEWS = [
     {
@@ -88,4 +154,308 @@ export const SAMPLE_SERVICE_PROVIDERS = [
     { id: 8, serviceName: 'BrightFix Handyman' },
     { id: 9, serviceName: 'FreshLook Landscaping' },
     { id: 10, serviceName: 'TechPros IT Support' },
+];
+
+// Mock data for search page services
+export const MOCK_SEARCH_SERVICES = [
+    {
+        serviceId: 1,
+        serviceName: 'Plumbing Leak Repair',
+        description: 'Expert plumbing services for leak detection and repair. Fast response time and guaranteed quality work.',
+        cost: 1500,
+        avgRating: 4.8,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://atmosclear.biz/wp-content/uploads/2019/07/Atmosclear-Domestic-Plumbing.jpg',
+        providerId: {
+            providerId: 101,
+            providerName: 'ProFix Plumbing'
+        }
+    },
+    {
+        serviceId: 2,
+        serviceName: 'Plumbing Installation',
+        description: 'Complete plumbing installation for new homes and renovations. Licensed and experienced professionals.',
+        cost: 5000,
+        avgRating: 4.9,
+        location: 'Delhi',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://micromain.com/wp-content/uploads/Emergency.png',
+        providerId: {
+            providerId: 102,
+            providerName: 'Elite Plumbing Services'
+        }
+    },
+    {
+        serviceId: 3,
+        serviceName: 'Electrician Wiring Services',
+        description: 'Professional electrical wiring for residential and commercial properties. Safety certified.',
+        cost: 2000,
+        avgRating: 4.7,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80',
+        providerId: {
+            providerId: 103,
+            providerName: 'Bright Electric Co.'
+        }
+    },
+    {
+        serviceId: 4,
+        serviceName: 'Electrician Panel Upgrade',
+        description: 'Electrical panel upgrades and circuit breaker installation. Modern and safe solutions.',
+        cost: 8000,
+        avgRating: 5.0,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80',
+        providerId: {
+            providerId: 104,
+            providerName: 'PowerTech Electricians'
+        }
+    },
+    {
+        serviceId: 5,
+        serviceName: 'Cleaning Deep Home Cleaning',
+        description: 'Thorough deep cleaning service for your entire home. Eco-friendly products used.',
+        cost: 2500,
+        avgRating: 4.6,
+        location: 'Pune',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80',
+        providerId: {
+            providerId: 105,
+            providerName: 'Sparkle Clean Co.'
+        }
+    },
+    {
+        serviceId: 6,
+        serviceName: 'Cleaning Office Maintenance',
+        description: 'Regular office cleaning and maintenance services. Flexible scheduling available.',
+        cost: 1800,
+        avgRating: 4.5,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=800&q=80',
+        providerId: {
+            providerId: 106,
+            providerName: 'Professional Cleaners Inc.'
+        }
+    },
+    {
+        serviceId: 7,
+        serviceName: 'Carpentry Custom Furniture',
+        description: 'Custom-made furniture designed and built to your specifications. Quality craftsmanship.',
+        cost: 12000,
+        avgRating: 4.9,
+        location: 'Delhi',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?w=800&q=80',
+        providerId: {
+            providerId: 107,
+            providerName: 'Master Woodworks'
+        }
+    },
+    {
+        serviceId: 8,
+        serviceName: 'Carpentry Cabinet Installation',
+        description: 'Professional cabinet installation for kitchens and bathrooms. Precise measurements and fitting.',
+        cost: 6000,
+        avgRating: 4.8,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1556912173-46c336c7fd55?w=800&q=80',
+        providerId: {
+            providerId: 108,
+            providerName: 'Cabinet Masters'
+        }
+    },
+    {
+        serviceId: 9,
+        serviceName: 'Painting Interior Painting',
+        description: 'Professional interior painting services with premium paints. Clean and efficient work.',
+        cost: 4000,
+        avgRating: 4.7,
+        location: 'Pune',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&q=80',
+        providerId: {
+            providerId: 109,
+            providerName: 'Color Perfect Painters'
+        }
+    },
+    {
+        serviceId: 10,
+        serviceName: 'Painting Exterior Services',
+        description: 'Exterior painting and weatherproofing. Durable finishes for monsoon protection.',
+        cost: 9000,
+        avgRating: 4.6,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800&q=80',
+        providerId: {
+            providerId: 110,
+            providerName: 'Outdoor Paint Pros'
+        }
+    },
+    {
+        serviceId: 11,
+        serviceName: 'AC Air Conditioning Repair',
+        description: '24/7 AC repair services. Quick diagnosis and repair for all major brands.',
+        cost: 3000,
+        avgRating: 4.8,
+        location: 'Chennai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=800&q=80',
+        providerId: {
+            providerId: 111,
+            providerName: 'CoolAir Services'
+        }
+    },
+    {
+        serviceId: 12,
+        serviceName: 'AC Installation',
+        description: 'Complete AC installation with warranty. Energy-efficient options available.',
+        cost: 25000,
+        avgRating: 5.0,
+        location: 'Hyderabad',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1635274531355-74f1b53e7c6d?w=800&q=80',
+        providerId: {
+            providerId: 112,
+            providerName: 'CoolHome AC Solutions'
+        }
+    },
+    {
+        serviceId: 13,
+        serviceName: 'Gardening Lawn Care',
+        description: 'Regular lawn maintenance including mowing, edging, and fertilization.',
+        cost: 1200,
+        avgRating: 4.4,
+        location: 'Pune',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=800&q=80',
+        providerId: {
+            providerId: 113,
+            providerName: 'GreenScape Gardening'
+        }
+    },
+    {
+        serviceId: 14,
+        serviceName: 'Gardening Landscape Design',
+        description: 'Professional landscape design and installation. Transform your outdoor space.',
+        cost: 15000,
+        avgRating: 4.9,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&q=80',
+        providerId: {
+            providerId: 114,
+            providerName: 'Dream Gardens Ltd.'
+        }
+    },
+    {
+        serviceId: 15,
+        serviceName: 'Roofing Repair Services',
+        description: 'Emergency and scheduled roof repairs. Waterproofing for monsoon season.',
+        cost: 7000,
+        avgRating: 4.7,
+        location: 'Chennai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=800&q=80',
+        providerId: {
+            providerId: 115,
+            providerName: 'TopCover Roofing'
+        }
+    },
+    {
+        serviceId: 16,
+        serviceName: 'Roofing Installation',
+        description: 'Complete roof replacement and new installations. Warranty included.',
+        cost: 50000,
+        avgRating: 4.8,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1590642916589-592bca10dfbf?w=800&q=80',
+        providerId: {
+            providerId: 116,
+            providerName: 'Premium Roofing Solutions'
+        }
+    },
+    {
+        serviceId: 17,
+        serviceName: 'Locksmith Emergency Services',
+        description: '24/7 emergency lockout service. Fast response time guaranteed.',
+        cost: 1000,
+        avgRating: 4.6,
+        location: 'Kolkata',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+        providerId: {
+            providerId: 117,
+            providerName: 'QuickKey Locksmiths'
+        }
+    },
+    {
+        serviceId: 18,
+        serviceName: 'Locksmith Security Installation',
+        description: 'Advanced security system installation including smart locks and cameras.',
+        cost: 4500,
+        avgRating: 4.9,
+        location: 'Hyderabad',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=800&q=80',
+        providerId: {
+            providerId: 118,
+            providerName: 'SecureHome Systems'
+        }
+    },
+    {
+        serviceId: 19,
+        serviceName: 'Appliance Refrigerator Repair',
+        description: 'Expert refrigerator repair services. All brands and models serviced.',
+        cost: 1800,
+        avgRating: 4.5,
+        location: 'Delhi',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=800&q=80',
+        providerId: {
+            providerId: 119,
+            providerName: 'FixIt Appliance Repair'
+        }
+    },
+    {
+        serviceId: 20,
+        serviceName: 'Appliance Washing Machine Service',
+        description: 'Washing machine repair and maintenance. Same-day service available.',
+        cost: 1500,
+        avgRating: 4.7,
+        location: 'Chennai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&q=80',
+        providerId: {
+            providerId: 120,
+            providerName: 'Home Appliance Experts'
+        }
+    }
 ];

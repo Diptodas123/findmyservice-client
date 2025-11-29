@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
     Typography,
@@ -25,7 +26,7 @@ import {
 } from '@mui/icons-material';
 
 import toastMessage from '../../utils/toastMessage';
-import { MOCK_PROVIDER, MOCK_REVIEWS } from '../../../mockData';
+import { MOCK_PROVIDER, MOCK_REVIEWS, getProviderById } from '../../../mockData';
 
 import HeaderBlock from './HeaderBlock';
 import PhotosGrid from './PhotosGrid';
@@ -34,14 +35,33 @@ import ReviewsList from './ReviewsList';
 import ContactCard from './ContactCard';
 
 const ServiceProviderDetails = () => {
-    const provider = MOCK_PROVIDER;
-
+    const { providerId } = useParams();
+    const navigate = useNavigate();
+    const [provider, setProvider] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [expandedReviewIds, setExpandedReviewIds] = useState([]);
 
     const overviewRef = useRef(null);
     const photosRef = useRef(null);
     const servicesRef = useRef(null);
     const reviewsRef = useRef(null);
+
+    useEffect(() => {
+        // Simulate API call with delay
+        console.log('Loading provider with ID:', providerId);
+        setLoading(true);
+        setTimeout(() => {
+            const providerData = getProviderById(providerId);
+            console.log('Provider data:', providerData);
+            if (!providerData) {
+                toastMessage('error', 'Provider not found');
+                navigate('/search');
+                return;
+            }
+            setProvider(providerData);
+            setLoading(false);
+        }, 500);
+    }, [providerId, navigate]);
 
     const scrollTo = (ref) => {
         if (ref && ref.current) {
@@ -63,8 +83,17 @@ const ServiceProviderDetails = () => {
 
     const closeLightbox = () => setLightboxOpen(false);
 
-    const nextImage = useCallback(() => setCurrentIndex((i) => (i + 1) % provider.imageUrls.length), [provider.imageUrls.length]);
-    const prevImage = useCallback(() => setCurrentIndex((i) => (i - 1 + provider.imageUrls.length) % provider.imageUrls.length), [provider.imageUrls.length]);
+    const nextImage = useCallback(() => {
+        if (provider?.imageUrls) {
+            setCurrentIndex((i) => (i + 1) % provider.imageUrls.length);
+        }
+    }, [provider]);
+    
+    const prevImage = useCallback(() => {
+        if (provider?.imageUrls) {
+            setCurrentIndex((i) => (i - 1 + provider.imageUrls.length) % provider.imageUrls.length);
+        }
+    }, [provider]);
 
     useEffect(() => {
         if (!lightboxOpen) return;
@@ -76,12 +105,6 @@ const ServiceProviderDetails = () => {
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
     }, [lightboxOpen, nextImage, prevImage]);
-
-    const [loading, setLoading] = useState(true);
-    useEffect(() => {
-        const t = setTimeout(() => setLoading(false), 600);
-        return () => clearTimeout(t);
-    }, []);
 
     const sortedReviews = React.useMemo(() => {
         const arr = [...MOCK_REVIEWS];
@@ -99,10 +122,8 @@ const ServiceProviderDetails = () => {
         }
     }, [reviewSort]);
 
-    if (!provider) return null;
-
     const handleCall = () => {
-        if (provider.phone) {
+        if (provider?.phone) {
             window.location.href = `tel:${provider.phone}`;
         } else {
             toastMessage({ msg: 'Phone number not available', type: 'info' });
@@ -110,7 +131,7 @@ const ServiceProviderDetails = () => {
     };
 
     const handleEmail = () => {
-        if (provider.email) {
+        if (provider?.email) {
             window.location.href = `mailto:${provider.email}`;
         } else {
             toastMessage({ msg: 'Email not available', type: 'info' });
@@ -121,8 +142,8 @@ const ServiceProviderDetails = () => {
         try {
             if (navigator.share)
                 await navigator.share({
-                    title: provider.providerName,
-                    text: provider.description,
+                    title: provider?.providerName,
+                    text: provider?.description,
                     url: window.location.href
                 });
             else if (navigator.clipboard) {
@@ -141,7 +162,12 @@ const ServiceProviderDetails = () => {
                 type: 'error'
             });
         }
+    };
+    
+    if (!provider && !loading) {
+        return null;
     }
+    
     return (
         <>
             <Box sx={{ p: { xs: 1, md: 4 }, mt: 10, maxWidth: 1200, mx: 'auto' }}>
@@ -272,7 +298,7 @@ const ServiceProviderDetails = () => {
                                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, alignItems: 'center', display: 'flex' }}>
                                     <InfoOutlinedIcon sx={{ mr: 1 }} /> Overview
                                 </Typography>
-                                <Typography variant="body1" color="text.secondary">{provider.description}</Typography>
+                                <Typography variant="body1" color="text.secondary">{provider?.description || 'No description available'}</Typography>
                             </Box>
 
                             <Box ref={photosRef} id="photos" sx={{ mb: 4 }}>
@@ -280,8 +306,8 @@ const ServiceProviderDetails = () => {
                                     <PhotoLibraryOutlinedIcon sx={{ mr: 1 }} /> Photos
                                 </Typography>
                                 <PhotosGrid
-                                    imageUrls={provider.imageUrls}
-                                    providerName={provider.providerName}
+                                    imageUrls={provider?.imageUrls || []}
+                                    providerName={provider?.providerName || ''}
                                     loading={loading}
                                     onOpen={openLightbox}
                                 />
@@ -291,7 +317,7 @@ const ServiceProviderDetails = () => {
                                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, alignItems: 'center', display: 'flex' }}>
                                     <BuildOutlinedIcon sx={{ mr: 1 }} /> Services
                                 </Typography>
-                                <ServicesList services={provider.services} loading={loading} truncate={truncate} />
+                                <ServicesList services={provider?.services || []} loading={loading} truncate={truncate} provider={provider} />
                             </Box>
 
                             <Box ref={reviewsRef} id="reviews" sx={{ mb: 4 }}>
@@ -348,13 +374,15 @@ const ServiceProviderDetails = () => {
                                     borderRadius: 1,
                                     overflow: 'hidden'
                                 }}>
-                                    <iframe
-                                        title="provider-map"
-                                        src={`https://www.google.com/maps?q=${encodeURIComponent(`${provider.addressLine1} ${provider.city} ${provider.state}`)}&output=embed`}
-                                        style={{ border: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                                        allowFullScreen
-                                        loading="lazy"
-                                    />
+                                    {provider && (
+                                        <iframe
+                                            title="provider-map"
+                                            src={`https://www.google.com/maps?q=${encodeURIComponent(`${provider.addressLine1} ${provider.city} ${provider.state}`)}&output=embed`}
+                                            style={{ border: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                                            allowFullScreen
+                                            loading="lazy"
+                                        />
+                                    )}
                                 </Box>
                             </Paper>
                         </Box>
@@ -404,53 +432,57 @@ const ServiceProviderDetails = () => {
                         }}>
                         <ChevronRightIcon fontSize="large" />
                     </IconButton>
-                    <Box component="img"
-                        src={provider.imageUrls[currentIndex]}
-                        alt={`lightbox-${currentIndex}`}
-                        sx={{
-                            width: '100%',
-                            height: { xs: '60vh', md: '70vh' },
-                            objectFit: 'contain',
-                            bgcolor: 'black'
-                        }}
-                    />
-                    <Box sx={{ display: 'flex', gap: 1, mt: 1, overflowX: 'auto', justifyContent: 'center', px: 1 }}>
-                        {provider.imageUrls.map((src, idx) => (
-                            <Box
-                                key={`thumb-${idx}`}
-                                onClick={() => setCurrentIndex(idx)}
+                    {provider?.imageUrls && (
+                        <>
+                            <Box component="img"
+                                src={provider.imageUrls[currentIndex]}
+                                alt={`lightbox-${currentIndex}`}
                                 sx={{
-                                    border: idx === currentIndex ? '2px solid' : '2px solid transparent',
-                                    borderColor: idx === currentIndex ? 'primary.main' : 'transparent',
-                                    borderRadius: 1,
-                                    cursor: 'pointer'
-                                }}>
-                                <Box component="img"
-                                    src={src}
-                                    alt={`thumb-${idx}`}
-                                    sx={{
-                                        width: { xs: 80, md: 100 },
-                                        height: { xs: 56, md: 70 },
-                                        objectFit: 'cover',
-                                        display: 'block'
-                                    }}
-                                />
-                            </Box>
-                        ))}
-                    </Box>
-
-                    <Box sx={{ display: 'flex', gap: 1, mt: 1, justifyContent: 'center' }}>
-                        {provider.imageUrls.map((_, idx) => (
-                            <Box key={`dot-${idx}`}
-                                onClick={() => setCurrentIndex(idx)}
-                                sx={{
-                                    width: 8, height: 8, borderRadius: '50%',
-                                    bgcolor: idx === currentIndex ? 'primary.main' : 'grey.400',
-                                    cursor: 'pointer'
+                                    width: '100%',
+                                    height: { xs: '60vh', md: '70vh' },
+                                    objectFit: 'contain',
+                                    bgcolor: 'black'
                                 }}
                             />
-                        ))}
-                    </Box>
+                            <Box sx={{ display: 'flex', gap: 1, mt: 1, overflowX: 'auto', justifyContent: 'center', px: 1 }}>
+                                {provider.imageUrls.map((src, idx) => (
+                                    <Box
+                                        key={`thumb-${idx}`}
+                                        onClick={() => setCurrentIndex(idx)}
+                                        sx={{
+                                            border: idx === currentIndex ? '2px solid' : '2px solid transparent',
+                                            borderColor: idx === currentIndex ? 'primary.main' : 'transparent',
+                                            borderRadius: 1,
+                                            cursor: 'pointer'
+                                        }}>
+                                        <Box component="img"
+                                            src={src}
+                                            alt={`thumb-${idx}`}
+                                            sx={{
+                                                width: { xs: 80, md: 100 },
+                                                height: { xs: 56, md: 70 },
+                                                objectFit: 'cover',
+                                                display: 'block'
+                                            }}
+                                        />
+                                    </Box>
+                                ))}
+                            </Box>
+
+                            <Box sx={{ display: 'flex', gap: 1, mt: 1, justifyContent: 'center' }}>
+                                {provider.imageUrls.map((_, idx) => (
+                                    <Box key={`dot-${idx}`}
+                                        onClick={() => setCurrentIndex(idx)}
+                                        sx={{
+                                            width: 8, height: 8, borderRadius: '50%',
+                                            bgcolor: idx === currentIndex ? 'primary.main' : 'grey.400',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                ))}
+                            </Box>
+                        </>
+                    )}
                 </Box>
             </Dialog>
         </>
