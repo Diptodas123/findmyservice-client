@@ -223,3 +223,86 @@ export const MOCK_BOOKINGS = [
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
     },
 ];
+
+export const MOCK_PROVIDER_REVIEWS = [
+    {
+        feedbackId: 1,
+        userId: { userId: 101, name: 'Alice Johnson', profilePicture: 'https://i.pravatar.cc/150?img=1' },
+        serviceId: { serviceId: 's1', serviceName: 'General Plumbing' },
+        orderId: { orderId: 'BK-003' },
+        comment: 'Excellent service! Very professional and fixed the issue quickly. Highly recommend!',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+        providerResponse: null
+    },
+    {
+        feedbackId: 2,
+        userId: { userId: 102, name: 'Marcus Lee', profilePicture: 'https://i.pravatar.cc/150?img=2' },
+        serviceId: { serviceId: 's2', serviceName: 'Emergency Repairs' },
+        orderId: { orderId: 'BK-005' },
+        comment: 'Good work but arrived a bit late. Overall satisfied with the repair quality.',
+        rating: 4,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
+        providerResponse: 'Thank you for your feedback! We apologize for the delay and appreciate your understanding.'
+    },
+    {
+        feedbackId: 3,
+        userId: { userId: 103, name: 'Priya Kapoor', profilePicture: 'https://i.pravatar.cc/150?img=3' },
+        serviceId: { serviceId: 's3', serviceName: 'Water Heater Installation' },
+        orderId: { orderId: 'BK-007' },
+        comment: 'Very knowledgeable and polite. Replaced our old pipes and offered great advice on maintenance.',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+        providerResponse: 'Thank you so much! We\'re glad we could help you.'
+    },
+    {
+        feedbackId: 4,
+        userId: { userId: 104, name: 'Robert Smith', profilePicture: 'https://i.pravatar.cc/150?img=4' },
+        serviceId: { serviceId: 's1', serviceName: 'General Plumbing' },
+        orderId: { orderId: 'BK-009' },
+        comment: 'Average service. Got the job done but expected better communication.',
+        rating: 3,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+        providerResponse: null
+    },
+    {
+        feedbackId: 5,
+        userId: { userId: 105, name: 'Jennifer Brown', profilePicture: 'https://i.pravatar.cc/150?img=5' },
+        serviceId: { serviceId: 's2', serviceName: 'Emergency Repairs' },
+        orderId: { orderId: 'BK-012' },
+        comment: 'Fast response and great work! Saved us from a major water damage issue.',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
+        providerResponse: null
+    },
+    {
+        feedbackId: 6,
+        userId: { userId: 106, name: 'David Wilson', profilePicture: 'https://i.pravatar.cc/150?img=6' },
+        serviceId: { serviceId: 's1', serviceName: 'General Plumbing' },
+        orderId: { orderId: 'BK-015' },
+        comment: 'Not satisfied. Work was done hastily and I had to call another plumber to fix it properly.',
+        rating: 2,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
+        providerResponse: null
+    },
+    {
+        feedbackId: 7,
+        userId: { userId: 107, name: 'Sarah Martinez', profilePicture: 'https://i.pravatar.cc/150?img=7' },
+        serviceId: { serviceId: 's3', serviceName: 'Water Heater Installation' },
+        orderId: { orderId: 'BK-018' },
+        comment: 'Outstanding! Very professional and cleaned up after themselves. Will definitely use again.',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+        providerResponse: 'We appreciate your kind words! Looking forward to serving you again.'
+    },
+    {
+        feedbackId: 8,
+        userId: { userId: 108, name: 'James Taylor', profilePicture: 'https://i.pravatar.cc/150?img=8' },
+        serviceId: { serviceId: 's2', serviceName: 'Emergency Repairs' },
+        orderId: { orderId: 'BK-020' },
+        comment: 'Decent service but a bit overpriced for what was done.',
+        rating: 3,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25).toISOString(),
+        providerResponse: null
+    }
+];
