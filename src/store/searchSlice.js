@@ -8,6 +8,7 @@ const initialState = {
     priceMin: 0,
     priceMax: 10000,
     ratings: [],
+    sortBy: 'relevance', // relevance, price-low, price-high, rating-high, rating-low, name-asc, name-desc
   },
   services: [],
   loading: false,
@@ -52,6 +53,9 @@ const searchSlice = createSlice({
         state.filters.ratings.push(rating);
       }
     },
+    setSortBy: (state, action) => {
+      state.filters.sortBy = action.payload;
+    },
     setFilters: (state, action) => {
       state.filters = { ...initialState.filters, ...action.payload };
     },
@@ -81,6 +85,7 @@ export const {
   setPriceRange,
   setRatings,
   toggleRating,
+  setSortBy,
   setFilters,
   clearFilters,
   setServices,

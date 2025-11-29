@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Box, Typography, Paper, Grid, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import FilterSidebar from '../../components/FilterSidebar/FilterSidebar.jsx';
@@ -14,6 +14,7 @@ import {
   toggleCategory,
   setPriceRange,
   toggleRating,
+  setSortBy,
   clearFilters,
   setServices,
   setLoading,
@@ -27,7 +28,7 @@ export default function Search() {
   
   // Get state from Redux
   const { filters, services, loading, error } = useSelector((state) => state.search);
-  const { query, location, categories: selectedCategories, priceMin, priceMax, ratings: selectedRatings } = filters;
+  const { query, location, categories: selectedCategories, priceMin, priceMax, ratings: selectedRatings, sortBy } = filters;
 
   // Fetch all services from backend
   useEffect(() => {
@@ -131,6 +132,27 @@ export default function Search() {
     return matchesQuery && matchesCategory && matchesPrice && matchesRating && matchesLocation && isActive;
   });
 
+  // Sort logic
+  const sortedServices = [...filteredServices].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-low':
+        return (Number(a.cost) || 0) - (Number(b.cost) || 0);
+      case 'price-high':
+        return (Number(b.cost) || 0) - (Number(a.cost) || 0);
+      case 'rating-high':
+        return (Number(b.avgRating) || 0) - (Number(a.avgRating) || 0);
+      case 'rating-low':
+        return (Number(a.avgRating) || 0) - (Number(b.avgRating) || 0);
+      case 'name-asc':
+        return (a.serviceName || '').localeCompare(b.serviceName || '');
+      case 'name-desc':
+        return (b.serviceName || '').localeCompare(a.serviceName || '');
+      case 'relevance':
+      default:
+        return 0; // Keep original order
+    }
+  });
+
   // Handlers
   const handleCategoryChange = (cat) => {
     dispatch(toggleCategory(cat));
@@ -221,9 +243,27 @@ export default function Search() {
 
         {/* Results Section */}
         <Box sx={{ flex: 1, p: { xs: 2, sm: 3 }, overflowX: 'auto' }}>
-          <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-            Search Services
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              Search Services
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Sort By</InputLabel>
+              <Select
+                value={sortBy}
+                label="Sort By"
+                onChange={(e) => dispatch(setSortBy(e.target.value))}
+              >
+                <MenuItem value="relevance">Relevance</MenuItem>
+                <MenuItem value="price-low">Price: Low to High</MenuItem>
+                <MenuItem value="price-high">Price: High to Low</MenuItem>
+                <MenuItem value="rating-high">Rating: High to Low</MenuItem>
+                <MenuItem value="rating-low">Rating: Low to High</MenuItem>
+                <MenuItem value="name-asc">Name: A to Z</MenuItem>
+                <MenuItem value="name-desc">Name: Z to A</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -240,11 +280,11 @@ export default function Search() {
           {!loading && !error && (
             <>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {filteredServices.length} service{filteredServices.length !== 1 ? 's' : ''} found
+                {sortedServices.length} service{sortedServices.length !== 1 ? 's' : ''} found
               </Typography>
 
               <Grid container spacing={3}>
-                {filteredServices.length === 0 ? (
+                {sortedServices.length === 0 ? (
                   <Grid item xs={12}>
                     <Box sx={{ 
                       textAlign: 'center', 
@@ -261,7 +301,7 @@ export default function Search() {
                     </Box>
                   </Grid>
                 ) : (
-                  filteredServices.map(service => (
+                  sortedServices.map(service => (
                     <Grid item xs={12} sm={6} md={4} key={service.serviceId}>
                       <ServiceCard
                         serviceId={service.serviceId}
