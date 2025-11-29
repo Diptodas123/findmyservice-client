@@ -13,7 +13,8 @@ import {
 import {
   List as ListIcon,
   Event as EventIcon,
-  Home as HomeIcon
+  Home as HomeIcon,
+  RateReview as RateReviewIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 260;
@@ -21,7 +22,8 @@ const drawerWidth = 260;
 const ITEMS = [
   { key: 'home', label: 'Home', Icon: HomeIcon },
   { key: 'services', label: 'Services', Icon: ListIcon },
-  { key: 'bookings', label: 'Bookings', Icon: EventIcon }
+  { key: 'bookings', label: 'Bookings', Icon: EventIcon },
+  { key: 'reviews', label: 'Reviews', Icon: RateReviewIcon }
 ];
 
 const ProviderSidebar = ({

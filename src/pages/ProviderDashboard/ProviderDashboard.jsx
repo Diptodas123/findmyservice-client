@@ -5,6 +5,7 @@ import ProviderSidebar from './ProviderSidebar';
 // ProviderDetails removed; details are shown in ProviderHomeView
 import ServicesList from './ServicesList';
 import BookingsList from './BookingsList';
+import ReviewsManagement from './ReviewsManagement';
 import ProviderHomeView from './ProviderHomeView';
 import { MOCK_PROVIDER } from '../../../mockData';
 import { buildTheme } from '../../theme/theme.js';
@@ -33,6 +34,8 @@ const ProviderDashboard = () => {
                 return <ServicesList provider={provider} />;
             case 'bookings':
                 return <BookingsList provider={provider} />;
+            case 'reviews':
+                return <ReviewsManagement provider={provider} />;
             default:
                 return <div>Welcome to the Provider Dashboard</div>;
         }
