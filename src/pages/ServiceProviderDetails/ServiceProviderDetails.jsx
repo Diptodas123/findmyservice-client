@@ -42,6 +42,7 @@ const ServiceProviderDetails = () => {
     const providerId = params.providerId || params.id;
     const navigate = useNavigate();
     const [provider, setProvider] = useState(null);
+    const [services, setServices] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedReviewIds, setExpandedReviewIds] = useState([]);
@@ -67,6 +68,16 @@ const ServiceProviderDetails = () => {
                     return;
                 }
                 setProvider(providerData);
+                
+                // Fetch services for this provider
+                try {
+                    const servicesResponse = await apiClient.get(`/api/v1/services/provider/${providerId}`);
+                    const servicesData = servicesResponse.data || servicesResponse;
+                    setServices(Array.isArray(servicesData) ? servicesData : []);
+                } catch (serviceError) {
+                    console.error('Error fetching services:', serviceError);
+                    setServices([]);
+                }
                 
                 // Fetch reviews for this provider
                 try {
@@ -345,7 +356,7 @@ const ServiceProviderDetails = () => {
                                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, alignItems: 'center', display: 'flex' }}>
                                     <BuildOutlinedIcon sx={{ mr: 1 }} /> Services
                                 </Typography>
-                                <ServicesList services={provider?.services || []} loading={loading} truncate={truncate} provider={provider} />
+                                <ServicesList services={services} loading={loading} truncate={truncate} provider={provider} />
                             </Box>
 
                             <Box ref={reviewsRef} id="reviews" sx={{ mb: 4 }}>

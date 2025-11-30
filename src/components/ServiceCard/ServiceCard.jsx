@@ -200,7 +200,7 @@ export default function ServiceCard({ serviceId, name, description, image, provi
                 sx={{
                   fontSize: '0.75rem',
                   height: 22,
-                  backgroundColor: availability === 'Available' ? '#4caf50' : '#f44336',
+                  backgroundColor: availability === 'AVAILABLE' ? '#4caf50' : '#f44336',
                   color: '#fff',
                   fontWeight: 500
                 }}

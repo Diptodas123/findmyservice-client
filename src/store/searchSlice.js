@@ -62,9 +62,11 @@ const searchSlice = createSlice({
     clearFilters: (state) => {
       state.filters = initialState.filters;
     },
+    clearCategories: (state) => {
+      state.filters.categories = [];
+    },
     setServices: (state, action) => {
       state.services = action.payload;
-      state.loading = false;
       state.error = null;
     },
     setLoading: (state, action) => {
