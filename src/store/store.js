@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import cartReducer, { setCart } from './cartSlice';
 import userReducer, { setUser } from './userSlice';
+import searchReducer from './searchSlice';
 
 const loadCart = () => {
   try {
@@ -44,7 +45,8 @@ const preloadedUser = loadUser();
 const store = configureStore({
   reducer: {
     cart: cartReducer,
-    user: userReducer
+    user: userReducer,
+    search: searchReducer
   },
 });
 

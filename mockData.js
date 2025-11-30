@@ -1,14 +1,14 @@
 
 export const MOCK_PROVIDER = {
-    providerId: 12345,
-    providerName: 'ABC Services',
-    email: 'john.doe@example.com',
-    phone: '+1-555-123-4567',
-    addressLine1: '12 Baker Street',
-    addressLine2: 'Suite 4B',
-    city: 'Metropolis',
-    state: 'CA',
-    zipCode: '94016',
+    providerId: 101,
+    providerName: 'ProFix Plumbing',
+    email: 'contact@profixplumbing.com',
+    phone: '+91-98765-43210',
+    addressLine1: '123 MG Road',
+    addressLine2: 'Near Metro Station',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    zipCode: '400001',
     createdAt: new Date().toISOString(),
     profilePictureUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeyHKd8ng_bUjfxGTGplWC9kMFLmxqTMDn53Fwk50MRU1fSFAwrd95PNzHLcTpPDCT4kw&usqp=CAU',
     imageUrls: [
@@ -18,28 +18,94 @@ export const MOCK_PROVIDER = {
     ],
     services: [
         {
-            id: 's1',
-            name: 'General Plumbing',
-            description: 'Full-service plumbing including drains, taps, installations and preventative maintenance. We handle both residential and commercial jobs with quick turnarounds and transparent pricing.',
-            imageUrl: 'https://atmosclear.biz/wp-content/uploads/2019/07/Atmosclear-Domestic-Plumbing.jpg'
+            id: 1,
+            name: 'Plumbing Leak Repair',
+            description: 'Expert plumbing services for leak detection and repair. Fast response time and guaranteed quality work.',
+            imageUrl: 'https://atmosclear.biz/wp-content/uploads/2019/07/Atmosclear-Domestic-Plumbing.jpg',
+            price: 1500
         },
         {
-            id: 's2',
-            name: 'Emergency Repairs',
-            description: '24/7 emergency response for burst pipes, gas leaks, and urgent repairs. Certified technicians arrive fast and secure the issue to prevent further damage.',
-            imageUrl: 'https://micromain.com/wp-content/uploads/Emergency.png'
+            id: 2,
+            name: 'Emergency Plumbing',
+            description: '24/7 emergency response for burst pipes, gas leaks, and urgent repairs. Certified technicians arrive fast.',
+            imageUrl: 'https://micromain.com/wp-content/uploads/Emergency.png',
+            price: 2500
         },
         {
-            id: 's3',
+            id: 3,
             name: 'Water Heater Installation',
-            description: 'Installation and replacement of tank and tankless water heaters with energy-efficient options and warranty-backed workmanship.',
-            imageUrl: 'https://trusteyman.com/wp-content/uploads/2018/05/Water-heater-installation-dos-and-donts.jpeg'
+            description: 'Installation and replacement of tank and tankless water heaters with energy-efficient options and warranty.',
+            imageUrl: 'https://trusteyman.com/wp-content/uploads/2018/05/Water-heater-installation-dos-and-donts.jpeg',
+            price: 8000
+        },
+        {
+            id: 4,
+            name: 'Drain Cleaning',
+            description: 'Professional drain cleaning services for kitchen, bathroom, and outdoor drains using modern equipment.',
+            imageUrl: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80',
+            price: 1200
         }
     ],
-    avgRating: 4.6,
+    avgRating: 4.8,
     totalRatings: 128,
     description: 'Experienced professional offering reliable plumbing and repair services. Fast response, fair pricing, and a satisfaction guarantee.'
 };
+
+// Generate provider details based on serviceId
+export const getProviderById = (providerId) => {
+    const providerIdNum = Number(providerId);
+    
+    // Find all services for this provider
+    const providerServices = MOCK_SEARCH_SERVICES.filter(
+        service => service.providerId?.providerId === providerIdNum
+    );
+    
+    if (providerServices.length === 0) {
+        return null;
+    }
+    
+    const firstService = providerServices[0];
+    const providerName = firstService.providerId.providerName;
+    
+    // Calculate average rating
+    const avgRating = providerServices.reduce((sum, s) => sum + s.avgRating, 0) / providerServices.length;
+    
+    return {
+        providerId: providerIdNum,
+        providerName: providerName,
+        email: `contact@${providerName.toLowerCase().replace(/\s+/g, '')}.com`,
+        phone: `+91-${98000 + providerIdNum}-${10000 + providerIdNum}`,
+        addressLine1: `${providerIdNum} Business Park`,
+        addressLine2: 'Commercial Area',
+        city: firstService.location,
+        state: firstService.location === 'Mumbai' ? 'Maharashtra' : 
+               firstService.location === 'Delhi' ? 'Delhi' : 
+               firstService.location === 'Bangalore' ? 'Karnataka' : 
+               firstService.location === 'Pune' ? 'Maharashtra' : 
+               firstService.location === 'Chennai' ? 'Tamil Nadu' : 
+               firstService.location === 'Hyderabad' ? 'Telangana' : 
+               firstService.location === 'Kolkata' ? 'West Bengal' : 'India',
+        zipCode: `${400000 + providerIdNum}`,
+        createdAt: new Date(Date.now() - providerIdNum * 24 * 60 * 60 * 1000).toISOString(),
+        profilePictureUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeyHKd8ng_bUjfxGTGplWC9kMFLmxqTMDn53Fwk50MRU1fSFAwrd95PNzHLcTpPDCT4kw&usqp=CAU',
+        imageUrls: [
+            firstService.imageUrl,
+            'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1200&q=80',
+            'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1200&q=80'
+        ],
+        services: providerServices.map(s => ({
+            id: s.serviceId,
+            name: s.serviceName,
+            description: s.description,
+            imageUrl: s.imageUrl,
+            price: s.cost
+        })),
+        avgRating: Number(avgRating.toFixed(1)),
+        totalRatings: Math.floor(Math.random() * 100) + 50,
+        description: `Professional ${providerName} offering quality services in ${firstService.location}. Experienced team with customer satisfaction guarantee.`
+    };
+};
+
 
 export const MOCK_REVIEWS = [
     {

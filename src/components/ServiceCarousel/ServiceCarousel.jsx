@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Card, Typography, IconButton } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -10,7 +11,8 @@ const ServiceCarousel = ({
     titleProp = 'serviceName',
     defaultImage = '',
     visible = 4,
-    cardSize = 160
+    cardSize = 160,
+    onItemClick
 }) => {
     const [index, setIndex] = useState(0);
     const viewportRef = useRef(null);
@@ -102,7 +104,12 @@ const ServiceCarousel = ({
                             key={item?.id ?? idx}>
                             <Card className="sg-card sg-rounded"
                                 variant="outlined"
-                                style={{ width: cardSize, height: cardSize }}>
+                                style={{ 
+                                    width: cardSize, 
+                                    height: cardSize,
+                                    cursor: onItemClick ? 'pointer' : 'default'
+                                }}
+                                onClick={() => onItemClick?.(item)}>
                                 <div className="sg-image">
                                     <img src={item?.[imageProp] || defaultImage}
                                         alt={item?.[titleProp] || ''}
@@ -120,6 +127,16 @@ const ServiceCarousel = ({
             </div>
         </div>
     );
+};
+
+ServiceCarousel.propTypes = {
+    items: PropTypes.array,
+    imageProp: PropTypes.string,
+    titleProp: PropTypes.string,
+    defaultImage: PropTypes.string,
+    visible: PropTypes.number,
+    cardSize: PropTypes.number,
+    onItemClick: PropTypes.func,
 };
 
 export default ServiceCarousel;
