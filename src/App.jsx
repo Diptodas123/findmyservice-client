@@ -11,6 +11,7 @@ import ServiceProviderDetails from './pages/ServiceProviderDetails/ServiceProvid
 import ServiceDetails from './pages/ServiceDetails/ServiceDetails.jsx';
 import Cart from './pages/Cart/Cart.jsx';
 import Search from './pages/Search/Search.jsx';
+import Contact from './pages/Contact/Contact.jsx';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
         <Route path='/service-details/:id' element={<ServiceDetails />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/contact" element={<Contact />} />
         </Routes>
       </Box>
       <GlobalFooter />
