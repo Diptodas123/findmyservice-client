@@ -15,6 +15,7 @@ import ProviderDashboard from './pages/ProviderDashboard/ProviderDashboard.jsx';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Search from './pages/Search/Search.jsx';
 import NotFound from './pages/NotFound/NotFound.jsx';
+import Contact from './pages/Contact/Contact.jsx';
 
 function InnerApp({ userRole }) {
   const location = useLocation();
@@ -47,6 +48,11 @@ function InnerApp({ userRole }) {
       ) : (
         <Routes>
           <Route path='/service-provider-dashboard/*' element={<ProviderDashboard />} />
+          <Route path="/search" element={<Search />} />
+          <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
+          <Route path='/service-details/:id' element={<ServiceDetails />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path='*' element={<NotFound />} />
         </Routes>
       )}
@@ -60,9 +66,6 @@ function App() {
   const userProfile = useSelector((state) => state.user?.profile);
   const providerProfile = useSelector((state) => state.provider?.profile);
   
-  // Determine user role based on Redux store
-  // If provider profile has providerId, user is a PROVIDER
-  // Otherwise check user profile role or default to USER
   const userRole = providerProfile?.providerId 
     ? 'PROVIDER' 
     : userProfile?.role || 'USER';
