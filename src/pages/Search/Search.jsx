@@ -5,9 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import FilterSidebar from '../../components/FilterSidebar/FilterSidebar.jsx';
 import ServiceCard from '../../components/ServiceCard/ServiceCard.jsx';
 import { useThemeMode } from '../../theme/useThemeMode';
-// import apiClient from '../../utils/apiClient';
-// import { API_BASE_URL } from '../../config/config';
-import { MOCK_SEARCH_SERVICES } from '../../../mockData.js';
+import { serviceAPI } from '../../utils/serviceAPI';
 import {
   setSearchQuery,
   setLocation,
@@ -32,25 +30,18 @@ export default function Search() {
 
   // Fetch all services from backend
   useEffect(() => {
-    // COMMENTED OUT - Using mock data instead of API call
-    // const fetchServices = async () => {
-    //   try {
-    //     dispatch(setLoading(true));
-    //     dispatch(setError(null));
-    //     const data = await apiClient.get('/api/v1/services', { baseURL: API_BASE_URL });
-    //     dispatch(setServices(data || []));
-    //   } catch (err) {
-    //     console.error('Error fetching services:', err);
-    //     dispatch(setError('Failed to load services. Please try again later.'));
-    //   }
-    // };
-    // fetchServices();
-
-    // Using mock data for development
-    dispatch(setLoading(true));
-    setTimeout(() => {
-      dispatch(setServices(MOCK_SEARCH_SERVICES || []));
-    }, 500); // Simulate network delay
+    const fetchServices = async () => {
+      try {
+        dispatch(setLoading(true));
+        dispatch(setError(null));
+        const data = await serviceAPI.getAllServices();
+        dispatch(setServices(data || []));
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        dispatch(setError(err.userMessage || 'Failed to load services. Please try again later.'));
+      }
+    };
+    fetchServices();
   }, [dispatch]);
 
   // Sync URL params with Redux state on mount

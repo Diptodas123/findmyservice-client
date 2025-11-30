@@ -1,27 +1,48 @@
 import { Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import ServiceCarousel from '../ServiceCarousel/ServiceCarousel';
-import { MOCK_SEARCH_SERVICES } from '../../../mockData';
 import { searchSimilarServices } from '../../utils/searchNavigation';
+import { serviceAPI } from '../../utils/serviceAPI';
 
 const PopularServiceProviders = () => {
 
     const navigate = useNavigate();
     const defaultImageUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvwrZoNvnxGJhZgUhZy7v_T2fHzrlbF6vMiQ&s';
+    const [popularServices, setPopularServices] = useState([]);
+    const [allServices, setAllServices] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Get top-rated services (rating >= 4.7) as popular providers
-    const popularServices = MOCK_SEARCH_SERVICES
-        .filter(service => service.avgRating >= 4.7)
-        .slice(0, 10)
-        .map(service => ({
-            id: service.serviceId,
-            serviceName: service.providerId?.providerName || service.serviceName,
-            imageUrl: service.imageUrl
-        }));
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const data = await serviceAPI.getAllServices();
+                setAllServices(data);
+                
+                // Get top-rated services (rating >= 4.7) as popular providers
+                const popular = data
+                    .filter(service => service.avgRating >= 4.7)
+                    .slice(0, 10)
+                    .map(service => ({
+                        id: service.serviceId,
+                        serviceName: service.providerId?.providerName || service.serviceName,
+                        imageUrl: service.imageUrl
+                    }));
+
+                setPopularServices(popular);
+            } catch (error) {
+                console.error('Error fetching services:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchServices();
+    }, []);
 
     const handleProviderClick = (provider) => {
         // Find the original service to get full details
-        const service = MOCK_SEARCH_SERVICES.find(
+        const service = allServices.find(
             s => s.providerId?.providerName === provider.serviceName
         );
         if (service) {
@@ -29,6 +50,7 @@ const PopularServiceProviders = () => {
         }
     };
 
+    if (loading) return null;
     if (!popularServices || popularServices.length === 0) return null;
 
     return (
