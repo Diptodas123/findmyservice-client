@@ -88,6 +88,7 @@ export const {
   setSortBy,
   setFilters,
   clearFilters,
+  clearCategories,
   setServices,
   setLoading,
   setError,

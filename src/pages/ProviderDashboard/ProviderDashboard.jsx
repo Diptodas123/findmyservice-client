@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Container, Toolbar, useTheme, useMediaQuery, ThemeProvider, CssBaseline, Avatar } from '@mui/material';
+import { useSelector } from 'react-redux';
 import ProviderHeader from './ProviderHeader';
 import ProviderSidebar from './ProviderSidebar';
+import ProviderSetupForm from './ProviderSetupForm';
 // ProviderDetails removed; details are shown in ProviderHomeView
 import ServicesList from './ServicesList';
 import BookingsList from './BookingsList';
@@ -25,7 +27,23 @@ const ProviderDashboard = () => {
         }
     });
 
+    // Get provider from Redux store
+    const reduxProvider = useSelector((state) => state.provider.profile);
+    const isProfileComplete = useSelector((state) => state.provider.isProfileComplete);
+
+    // Use Redux provider if available, otherwise fallback to mock
     const [provider, setProvider] = useState({ ...MOCK_PROVIDER });
+
+    useEffect(() => {
+        if (reduxProvider && reduxProvider.providerId) {
+            setProvider({ ...MOCK_PROVIDER, ...reduxProvider });
+        }
+    }, [reduxProvider]);
+
+    // If profile is not complete, show setup form
+    if (!isProfileComplete) {
+        return <ProviderSetupForm />;
+    }
 
     const renderView = () => {
         switch (view) {

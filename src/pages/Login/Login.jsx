@@ -4,6 +4,7 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/userSlice';
+import { setProvider } from '../../store/providerSlice';
 import apiClient from '../../utils/apiClient';
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import toastMessage from '../../utils/toastMessage';
@@ -54,31 +55,64 @@ export default function Login() {
         });
         if (data?.token) {
           localStorage.setItem('token', data.token);
-          const userId = data?.userId || data?.id || null;
-          const responseProfile = await getUserProfile(userId);
-          const profile = {
-            name: responseProfile?.name || '',
-            email: responseProfile?.email || '',
-            userId: userId,
-            role: responseProfile?.role || '',
-            phone: responseProfile?.phone || '',
-            addressLine1: responseProfile?.addressLine1 || '',
-            addressLine2: responseProfile?.addressLine2 || '',
-            city: responseProfile?.city || '',
-            state: responseProfile?.state || '',
-            zipCode: responseProfile?.zipCode || '',
-            profilePictureUrl: responseProfile?.profilePictureUrl || '',
-          };
-          try {
-            dispatch(setUser(profile));
-          } catch {
-            // ignore dispatch errors
+          const userId = data?.userId || data?.providerId || null;
+          
+          // Handle PROVIDER login differently
+          if (userData.role === 'PROVIDER') {
+            const providerProfile = await getProviderProfile(userId);
+            const providerData = {
+              providerId: providerProfile?.providerId || userId,
+              providerName: providerProfile?.providerName || '',
+              email: providerProfile?.email || '',
+              phone: providerProfile?.phone || '',
+              addressLine1: providerProfile?.addressLine1 || '',
+              addressLine2: providerProfile?.addressLine2 || '',
+              city: providerProfile?.city || '',
+              state: providerProfile?.state || '',
+              zipCode: providerProfile?.zipCode || '',
+              profilePictureUrl: providerProfile?.profilePictureUrl || '',
+              imageUrls: providerProfile?.imageUrls || [],
+              avgRating: providerProfile?.avgRating || 0,
+              totalRatings: providerProfile?.totalRatings || 0,
+              createdAt: providerProfile?.createdAt || '',
+            };
+            try {
+              dispatch(setProvider(providerData));
+            } catch {
+              // ignore dispatch errors
+            }
+            setLoading(false);
+            toastMessage({ msg: 'Login successful! Redirecting...', type: 'success' });
+            setTimeout(() => {
+              navigate('/service-provider-dashboard');
+            }, 2000);
+          } else {
+            // Handle USER login
+            const responseProfile = await getUserProfile(userId);
+            const profile = {
+              name: responseProfile?.name || '',
+              email: responseProfile?.email || '',
+              userId: userId,
+              role: responseProfile?.role || userData.role || 'USER',
+              phone: responseProfile?.phone || '',
+              addressLine1: responseProfile?.addressLine1 || '',
+              addressLine2: responseProfile?.addressLine2 || '',
+              city: responseProfile?.city || '',
+              state: responseProfile?.state || '',
+              zipCode: responseProfile?.zipCode || '',
+              profilePictureUrl: responseProfile?.profilePictureUrl || '',
+            };
+            try {
+              dispatch(setUser(profile));
+            } catch {
+              // ignore dispatch errors
+            }
+            setLoading(false);
+            toastMessage({ msg: 'Login successful! Redirecting...', type: 'success' });
+            setTimeout(() => {
+              navigate('/');
+            }, 2000);
           }
-          setLoading(false);
-          toastMessage({ msg: 'Login successful! Redirecting...', type: 'success' });
-          setTimeout(() => {
-            navigate('/');
-          }, 4000);
         } else {
           const msg = data?.error || 'Invalid credentials';
           toastMessage({ msg, type: 'error' });
@@ -96,6 +130,17 @@ export default function Login() {
       if (!userId) return null;
       try {
         const data = await apiClient.get(`/api/v1/users/${userId}`);
+        return data;
+      } catch {
+        // ignore errors
+      }
+      return null;
+    };
+
+    const getProviderProfile = async (providerId) => {
+      if (!providerId) return null;
+      try {
+        const data = await apiClient.get(`/api/v1/providers/${providerId}`);
         return data;
       } catch {
         // ignore errors

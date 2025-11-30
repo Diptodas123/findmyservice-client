@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import cartReducer, { setCart } from './cartSlice';
 import userReducer, { setUser } from './userSlice';
 import searchReducer from './searchSlice';
+import providerReducer, { setProvider } from './providerSlice';
 
 const loadCart = () => {
   try {
@@ -39,14 +40,34 @@ const saveUser = (state) => {
   }
 };
 
+const loadProvider = () => {
+  try {
+    const raw = localStorage.getItem('providerDetails');
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const saveProvider = (state) => {
+  try {
+    const payload = JSON.stringify(state.provider.profile || {});
+    localStorage.setItem('providerDetails', payload);
+  } catch {
+    // ignore
+  }
+};
+
 const preloadedCart = loadCart();
 const preloadedUser = loadUser();
+const preloadedProvider = loadProvider();
 
 const store = configureStore({
   reducer: {
     cart: cartReducer,
     user: userReducer,
-    search: searchReducer
+    search: searchReducer,
+    provider: providerReducer
   },
 });
 
@@ -67,9 +88,20 @@ if (preloadedUser && typeof preloadedUser === 'object') {
   }
 }
 
+if (preloadedProvider && typeof preloadedProvider === 'object') {
+  try {
+    // Handle migration: if provider data has nested profile, extract it
+    const providerData = preloadedProvider.profile ? preloadedProvider.profile : preloadedProvider;
+    store.dispatch(setProvider(providerData));
+  } catch {
+    // ignore
+  }
+}
+
 store.subscribe(() => {
   saveCart(store.getState());
   saveUser(store.getState());
+  saveProvider(store.getState());
 });
 
 export default store;

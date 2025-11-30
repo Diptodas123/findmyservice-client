@@ -31,7 +31,7 @@ body,
 
 /* Background for auth pages */
 .login-bg {
-  background-image: url('/public/login-bg.avif');
+  background-image: url('/login-bg.avif');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;

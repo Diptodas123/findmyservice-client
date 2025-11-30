@@ -1,5 +1,6 @@
 import { BrowserRouter } from 'react-router-dom';
 import { Box } from '@mui/material';
+import { useSelector } from 'react-redux';
 import Header from './components/GlobalHeader/Header';
 import HomePage from './pages/Home/HomePage.jsx';
 import ProfilePage from './pages/Profile/ProfilePage.jsx';
@@ -34,6 +35,7 @@ function InnerApp({ userRole }) {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />
+              <Route path="/search" element={<Search />} />
               <Route path='/service-details/:id' element={<ServiceDetails />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/profile" element={<ProfilePage />} />
@@ -44,12 +46,8 @@ function InnerApp({ userRole }) {
         </>
       ) : (
         <Routes>
-        <Route path='/service-provider-dashboard/*' element={<ProviderDashboard />} />
-        <Route path="/search" element={<Search />} />
-        <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
-        <Route path='/service-details/:id' element={<ServiceDetails />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path='*' element={<NotFound />} />
+          <Route path='/service-provider-dashboard/*' element={<ProviderDashboard />} />
+          <Route path='*' element={<NotFound />} />
         </Routes>
       )}
 
@@ -59,7 +57,15 @@ function InnerApp({ userRole }) {
 }
 
 function App() {
-  const userRole = 'PROVIDER';
+  const userProfile = useSelector((state) => state.user?.profile);
+  const providerProfile = useSelector((state) => state.provider?.profile);
+  
+  // Determine user role based on Redux store
+  // If provider profile has providerId, user is a PROVIDER
+  // Otherwise check user profile role or default to USER
+  const userRole = providerProfile?.providerId 
+    ? 'PROVIDER' 
+    : userProfile?.role || 'USER';
 
   return (
     <BrowserRouter>

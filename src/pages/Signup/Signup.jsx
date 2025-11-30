@@ -92,7 +92,7 @@ export default function Signup() {
         toastMessage({ msg: 'Registration successful! Redirecting to login...', type: 'success' });
         setTimeout(() => {
           navigate("/login");
-        }, 4000);
+        }, 2000);
       } else {
         setError(data?.error || "Registration failed");
       }

@@ -134,6 +134,101 @@ export const MOCK_REVIEWS = [
     }
 ]; 
 
+// Structured mock reviews for provider dashboard
+export const MOCK_PROVIDER_REVIEWS = [
+    {
+        feedbackId: 2001,
+        serviceId: { serviceId: 1, serviceName: 'Plumbing Leak Repair' },
+        userId: { userId: 501, name: 'Alice Johnson', profilePicture: 'https://images.unsplash.com/photo-1545996124-1b7a1f6a7f5c?w=200&q=80&auto=format&fit=crop' },
+        orderId: { orderId: 9001 },
+        comment: 'Quick, professional and reasonably priced. Fixed my leaky sink the same day.',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+        providerResponse: 'Thanks Alice — glad we could help!'
+    },
+    {
+        feedbackId: 2002,
+        serviceId: { serviceId: 2, serviceName: 'Emergency Plumbing' },
+        userId: { userId: 502, name: 'Marcus Lee', profilePicture: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop' },
+        comment: 'Good work but arrived a bit late. Overall satisfied with the repair.',
+        rating: 4,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
+    },
+    {
+        feedbackId: 2003,
+        serviceId: { serviceId: 3, serviceName: 'Water Heater Installation' },
+        userId: { userId: 503, name: 'Priya Kapoor', profilePicture: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&q=80&auto=format&fit=crop' },
+        comment: 'Very knowledgeable and polite. Replaced our old pipes and offered great advice.',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 70).toISOString(),
+    }
+];
+
+export const MOCK_BOOKINGS = [
+    {
+        id: 'BKG-1001',
+        customerName: 'Ravi Sharma',
+        customerEmail: 'ravi.sharma@example.com',
+        customerPhone: '+91-91234-56789',
+        serviceName: 'Plumbing Leak Repair',
+        scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+        scheduledTime: '10:00 AM',
+        amount: 1500,
+        status: 'pending',
+        paymentStatus: 'pending',
+        address: 'Flat 4B, 56 Palm Street, Mumbai',
+        notes: 'Please call upon arrival.',
+        createdAt: new Date().toISOString(),
+    },
+    {
+        id: 'BKG-1002',
+        customerName: 'Sneha Patel',
+        customerEmail: 'sneha.patel@example.com',
+        customerPhone: '+91-99876-54321',
+        serviceName: 'Water Heater Installation',
+        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        scheduledTime: '2:30 PM',
+        amount: 8000,
+        status: 'confirmed',
+        paymentStatus: 'pending',
+        address: '22 Lotus Apartments, Pune',
+        notes: '',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    },
+    {
+        id: 'BKG-1003',
+        customerName: 'Arjun Verma',
+        customerEmail: 'arjun.verma@example.com',
+        customerPhone: '+91-90123-45678',
+        serviceName: 'Drain Cleaning',
+        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+        scheduledTime: '9:00 AM',
+        amount: 1200,
+        status: 'completed',
+        paymentStatus: 'paid',
+        address: '10 Green Lane, Chennai',
+        notes: 'Customer satisfied with service.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
+        completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 29).toISOString(),
+    },
+    {
+        id: 'BKG-1004',
+        customerName: 'Priya Singh',
+        customerEmail: 'priya.singh@example.com',
+        customerPhone: '+91-98765-43210',
+        serviceName: 'Emergency Plumbing',
+        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+        scheduledTime: '11:15 AM',
+        amount: 2500,
+        status: 'cancelled',
+        paymentStatus: 'refunded',
+        address: '5 Rose Street, Delhi',
+        notes: 'Customer cancelled due to schedule conflict.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
+        cancelledAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    }
+];
+
 export const SAMPLE_SEVICES_FOR_RECOMMENDATION = [
     { serviceName: 'Home Cleaning' },
     { serviceName: 'Plumbing' },
@@ -156,219 +251,306 @@ export const SAMPLE_SERVICE_PROVIDERS = [
     { id: 10, serviceName: 'TechPros IT Support' },
 ];
 
-export const MOCK_BOOKINGS = [
+// Mock data for search page services
+export const MOCK_SEARCH_SERVICES = [
     {
-        id: 'BK-001',
-        customerName: 'Sarah Johnson',
-        customerEmail: 'sarah.j@email.com',
-        customerPhone: '+1-555-234-5678',
-        serviceName: 'General Plumbing',
-        serviceId: 's1',
-        scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days from now
-        scheduledTime: '10:00 AM',
-        status: 'pending',
-        amount: 150,
-        paymentStatus: 'pending',
-        address: '45 Oak Street, Metropolis, CA 94016',
-        notes: 'Leaking kitchen faucet needs repair',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+        serviceId: 1,
+        serviceName: 'Plumbing Leak Repair',
+        description: 'Expert plumbing services for leak detection and repair. Fast response time and guaranteed quality work.',
+        cost: 1500,
+        avgRating: 4.8,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://atmosclear.biz/wp-content/uploads/2019/07/Atmosclear-Domestic-Plumbing.jpg',
+        providerId: {
+            providerId: 101,
+            providerName: 'ProFix Plumbing'
+        }
     },
     {
-        id: 'BK-002',
-        customerName: 'Michael Chen',
-        customerEmail: 'mchen@email.com',
-        customerPhone: '+1-555-345-6789',
-        serviceName: 'Emergency Repairs',
-        serviceId: 's2',
-        scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 4).toISOString(), // 4 hours from now
-        scheduledTime: '2:00 PM',
-        status: 'confirmed',
-        amount: 250,
-        paymentStatus: 'paid',
-        address: '123 Main St, Metropolis, CA 94016',
-        notes: 'Urgent: Burst pipe in basement',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+        serviceId: 2,
+        serviceName: 'Plumbing Installation',
+        description: 'Complete plumbing installation for new homes and renovations. Licensed and experienced professionals.',
+        cost: 5000,
+        avgRating: 4.9,
+        location: 'Delhi',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://micromain.com/wp-content/uploads/Emergency.png',
+        providerId: {
+            providerId: 102,
+            providerName: 'Elite Plumbing Services'
+        }
     },
     {
-        id: 'BK-003',
-        customerName: 'Emily Rodriguez',
-        customerEmail: 'emily.r@email.com',
-        customerPhone: '+1-555-456-7890',
-        serviceName: 'Water Heater Installation',
-        serviceId: 's3',
-        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
-        scheduledTime: '9:00 AM',
-        status: 'completed',
-        amount: 800,
-        paymentStatus: 'paid',
-        address: '789 Pine Ave, Metropolis, CA 94016',
-        notes: 'Replace old water heater with tankless model',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-        completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+        serviceId: 3,
+        serviceName: 'Electrician Wiring Services',
+        description: 'Professional electrical wiring for residential and commercial properties. Safety certified.',
+        cost: 2000,
+        avgRating: 4.7,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80',
+        providerId: {
+            providerId: 103,
+            providerName: 'Bright Electric Co.'
+        }
     },
     {
-        id: 'BK-004',
-        customerName: 'David Wilson',
-        customerEmail: 'dwilson@email.com',
-        customerPhone: '+1-555-567-8901',
-        serviceName: 'General Plumbing',
-        serviceId: 's1',
-        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), // yesterday
-        scheduledTime: '11:00 AM',
-        status: 'cancelled',
-        amount: 120,
-        paymentStatus: 'refunded',
-        address: '321 Elm Road, Metropolis, CA 94016',
-        notes: 'Customer rescheduled',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-        cancelledAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        serviceId: 4,
+        serviceName: 'Electrician Panel Upgrade',
+        description: 'Electrical panel upgrades and circuit breaker installation. Modern and safe solutions.',
+        cost: 8000,
+        avgRating: 5.0,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80',
+        providerId: {
+            providerId: 104,
+            providerName: 'PowerTech Electricians'
+        }
     },
     {
-        id: 'BK-005',
-        customerName: 'Lisa Martinez',
-        customerEmail: 'lisa.m@email.com',
-        customerPhone: '+1-555-678-9012',
-        serviceName: 'Emergency Repairs',
-        serviceId: 's2',
-        scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days from now
-        scheduledTime: '3:00 PM',
-        status: 'confirmed',
-        amount: 200,
-        paymentStatus: 'paid',
-        address: '567 Maple Drive, Metropolis, CA 94016',
-        notes: 'Clogged main drain line',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        serviceId: 5,
+        serviceName: 'Cleaning Deep Home Cleaning',
+        description: 'Thorough deep cleaning service for your entire home. Eco-friendly products used.',
+        cost: 2500,
+        avgRating: 4.6,
+        location: 'Pune',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80',
+        providerId: {
+            providerId: 105,
+            providerName: 'Sparkle Clean Co.'
+        }
     },
     {
-        id: 'BK-006',
-        customerName: 'James Anderson',
-        customerEmail: 'janderson@email.com',
-        customerPhone: '+1-555-789-0123',
-        serviceName: 'Water Heater Installation',
-        serviceId: 's3',
-        scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days from now
-        scheduledTime: '8:00 AM',
-        status: 'pending',
-        amount: 750,
-        paymentStatus: 'pending',
-        address: '890 Birch Lane, Metropolis, CA 94016',
-        notes: 'New construction - install water heater',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+        serviceId: 6,
+        serviceName: 'Cleaning Office Maintenance',
+        description: 'Regular office cleaning and maintenance services. Flexible scheduling available.',
+        cost: 1800,
+        avgRating: 4.5,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=800&q=80',
+        providerId: {
+            providerId: 106,
+            providerName: 'Professional Cleaners Inc.'
+        }
     },
     {
-        id: 'BK-007',
-        customerName: 'Patricia Brown',
-        customerEmail: 'pbrown@email.com',
-        customerPhone: '+1-555-890-1234',
-        serviceName: 'General Plumbing',
-        serviceId: 's1',
-        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days ago
-        scheduledTime: '1:00 PM',
-        status: 'completed',
-        amount: 175,
-        paymentStatus: 'paid',
-        address: '234 Cedar Court, Metropolis, CA 94016',
-        notes: 'Fix running toilet and replace flapper',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-        completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+        serviceId: 7,
+        serviceName: 'Carpentry Custom Furniture',
+        description: 'Custom-made furniture designed and built to your specifications. Quality craftsmanship.',
+        cost: 12000,
+        avgRating: 4.9,
+        location: 'Delhi',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?w=800&q=80',
+        providerId: {
+            providerId: 107,
+            providerName: 'Master Woodworks'
+        }
     },
     {
-        id: 'BK-008',
-        customerName: 'Robert Taylor',
-        customerEmail: 'rtaylor@email.com',
-        customerPhone: '+1-555-901-2345',
-        serviceName: 'Emergency Repairs',
-        serviceId: 's2',
-        scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1).toISOString(), // tomorrow
-        scheduledTime: '4:00 PM',
-        status: 'confirmed',
-        amount: 300,
-        paymentStatus: 'paid',
-        address: '678 Willow Way, Metropolis, CA 94016',
-        notes: 'Water heater leaking - emergency service',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-    },
-];
-
-export const MOCK_PROVIDER_REVIEWS = [
-    {
-        feedbackId: 1,
-        userId: { userId: 101, name: 'Alice Johnson', profilePicture: 'https://i.pravatar.cc/150?img=1' },
-        serviceId: { serviceId: 's1', serviceName: 'General Plumbing' },
-        orderId: { orderId: 'BK-003' },
-        comment: 'Excellent service! Very professional and fixed the issue quickly. Highly recommend!',
-        rating: 5,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-        providerResponse: null
+        serviceId: 8,
+        serviceName: 'Carpentry Cabinet Installation',
+        description: 'Professional cabinet installation for kitchens and bathrooms. Precise measurements and fitting.',
+        cost: 6000,
+        avgRating: 4.8,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1556912173-46c336c7fd55?w=800&q=80',
+        providerId: {
+            providerId: 108,
+            providerName: 'Cabinet Masters'
+        }
     },
     {
-        feedbackId: 2,
-        userId: { userId: 102, name: 'Marcus Lee', profilePicture: 'https://i.pravatar.cc/150?img=2' },
-        serviceId: { serviceId: 's2', serviceName: 'Emergency Repairs' },
-        orderId: { orderId: 'BK-005' },
-        comment: 'Good work but arrived a bit late. Overall satisfied with the repair quality.',
-        rating: 4,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
-        providerResponse: 'Thank you for your feedback! We apologize for the delay and appreciate your understanding.'
+        serviceId: 9,
+        serviceName: 'Painting Interior Painting',
+        description: 'Professional interior painting services with premium paints. Clean and efficient work.',
+        cost: 4000,
+        avgRating: 4.7,
+        location: 'Pune',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&q=80',
+        providerId: {
+            providerId: 109,
+            providerName: 'Color Perfect Painters'
+        }
     },
     {
-        feedbackId: 3,
-        userId: { userId: 103, name: 'Priya Kapoor', profilePicture: 'https://i.pravatar.cc/150?img=3' },
-        serviceId: { serviceId: 's3', serviceName: 'Water Heater Installation' },
-        orderId: { orderId: 'BK-007' },
-        comment: 'Very knowledgeable and polite. Replaced our old pipes and offered great advice on maintenance.',
-        rating: 5,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-        providerResponse: 'Thank you so much! We\'re glad we could help you.'
+        serviceId: 10,
+        serviceName: 'Painting Exterior Services',
+        description: 'Exterior painting and weatherproofing. Durable finishes for monsoon protection.',
+        cost: 9000,
+        avgRating: 4.6,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800&q=80',
+        providerId: {
+            providerId: 110,
+            providerName: 'Outdoor Paint Pros'
+        }
     },
     {
-        feedbackId: 4,
-        userId: { userId: 104, name: 'Robert Smith', profilePicture: 'https://i.pravatar.cc/150?img=4' },
-        serviceId: { serviceId: 's1', serviceName: 'General Plumbing' },
-        orderId: { orderId: 'BK-009' },
-        comment: 'Average service. Got the job done but expected better communication.',
-        rating: 3,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-        providerResponse: null
+        serviceId: 11,
+        serviceName: 'AC Air Conditioning Repair',
+        description: '24/7 AC repair services. Quick diagnosis and repair for all major brands.',
+        cost: 3000,
+        avgRating: 4.8,
+        location: 'Chennai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=800&q=80',
+        providerId: {
+            providerId: 111,
+            providerName: 'CoolAir Services'
+        }
     },
     {
-        feedbackId: 5,
-        userId: { userId: 105, name: 'Jennifer Brown', profilePicture: 'https://i.pravatar.cc/150?img=5' },
-        serviceId: { serviceId: 's2', serviceName: 'Emergency Repairs' },
-        orderId: { orderId: 'BK-012' },
-        comment: 'Fast response and great work! Saved us from a major water damage issue.',
-        rating: 5,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
-        providerResponse: null
+        serviceId: 12,
+        serviceName: 'AC Installation',
+        description: 'Complete AC installation with warranty. Energy-efficient options available.',
+        cost: 25000,
+        avgRating: 5.0,
+        location: 'Hyderabad',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1635274531355-74f1b53e7c6d?w=800&q=80',
+        providerId: {
+            providerId: 112,
+            providerName: 'CoolHome AC Solutions'
+        }
     },
     {
-        feedbackId: 6,
-        userId: { userId: 106, name: 'David Wilson', profilePicture: 'https://i.pravatar.cc/150?img=6' },
-        serviceId: { serviceId: 's1', serviceName: 'General Plumbing' },
-        orderId: { orderId: 'BK-015' },
-        comment: 'Not satisfied. Work was done hastily and I had to call another plumber to fix it properly.',
-        rating: 2,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-        providerResponse: null
+        serviceId: 13,
+        serviceName: 'Gardening Lawn Care',
+        description: 'Regular lawn maintenance including mowing, edging, and fertilization.',
+        cost: 1200,
+        avgRating: 4.4,
+        location: 'Pune',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=800&q=80',
+        providerId: {
+            providerId: 113,
+            providerName: 'GreenScape Gardening'
+        }
     },
     {
-        feedbackId: 7,
-        userId: { userId: 107, name: 'Sarah Martinez', profilePicture: 'https://i.pravatar.cc/150?img=7' },
-        serviceId: { serviceId: 's3', serviceName: 'Water Heater Installation' },
-        orderId: { orderId: 'BK-018' },
-        comment: 'Outstanding! Very professional and cleaned up after themselves. Will definitely use again.',
-        rating: 5,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-        providerResponse: 'We appreciate your kind words! Looking forward to serving you again.'
+        serviceId: 14,
+        serviceName: 'Gardening Landscape Design',
+        description: 'Professional landscape design and installation. Transform your outdoor space.',
+        cost: 15000,
+        avgRating: 4.9,
+        location: 'Bangalore',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&q=80',
+        providerId: {
+            providerId: 114,
+            providerName: 'Dream Gardens Ltd.'
+        }
     },
     {
-        feedbackId: 8,
-        userId: { userId: 108, name: 'James Taylor', profilePicture: 'https://i.pravatar.cc/150?img=8' },
-        serviceId: { serviceId: 's2', serviceName: 'Emergency Repairs' },
-        orderId: { orderId: 'BK-020' },
-        comment: 'Decent service but a bit overpriced for what was done.',
-        rating: 3,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25).toISOString(),
-        providerResponse: null
+        serviceId: 15,
+        serviceName: 'Roofing Repair Services',
+        description: 'Emergency and scheduled roof repairs. Waterproofing for monsoon season.',
+        cost: 7000,
+        avgRating: 4.7,
+        location: 'Chennai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?w=800&q=80',
+        providerId: {
+            providerId: 115,
+            providerName: 'TopCover Roofing'
+        }
+    },
+    {
+        serviceId: 16,
+        serviceName: 'Roofing Installation',
+        description: 'Complete roof replacement and new installations. Warranty included.',
+        cost: 50000,
+        avgRating: 4.8,
+        location: 'Mumbai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1590642916589-592bca10dfbf?w=800&q=80',
+        providerId: {
+            providerId: 116,
+            providerName: 'Premium Roofing Solutions'
+        }
+    },
+    {
+        serviceId: 17,
+        serviceName: 'Locksmith Emergency Services',
+        description: '24/7 emergency lockout service. Fast response time guaranteed.',
+        cost: 1000,
+        avgRating: 4.6,
+        location: 'Kolkata',
+        availability: 'Not Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+        providerId: {
+            providerId: 117,
+            providerName: 'QuickKey Locksmiths'
+        }
+    },
+    {
+        serviceId: 18,
+        serviceName: 'Locksmith Security Installation',
+        description: 'Advanced security system installation including smart locks and cameras.',
+        cost: 4500,
+        avgRating: 4.9,
+        location: 'Hyderabad',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=800&q=80',
+        providerId: {
+            providerId: 118,
+            providerName: 'SecureHome Systems'
+        }
+    },
+    {
+        serviceId: 19,
+        serviceName: 'Appliance Refrigerator Repair',
+        description: 'Expert refrigerator repair services. All brands and models serviced.',
+        cost: 1800,
+        avgRating: 4.5,
+        location: 'Delhi',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=800&q=80',
+        providerId: {
+            providerId: 119,
+            providerName: 'FixIt Appliance Repair'
+        }
+    },
+    {
+        serviceId: 20,
+        serviceName: 'Appliance Washing Machine Service',
+        description: 'Washing machine repair and maintenance. Same-day service available.',
+        cost: 1500,
+        avgRating: 4.7,
+        location: 'Chennai',
+        availability: 'Available',
+        active: true,
+        imageUrl: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&q=80',
+        providerId: {
+            providerId: 120,
+            providerName: 'Home Appliance Experts'
+        }
     }
 ];

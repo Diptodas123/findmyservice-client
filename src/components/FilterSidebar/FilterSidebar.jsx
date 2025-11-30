@@ -24,7 +24,8 @@ export default function FilterSidebar({
   categories, selectedCategories, handleCategoryChange,
   priceMin, setPriceMin, priceMax, setPriceMax,
   ratingOptions, selectedRatings, handleRatingChange,
-  handleClearFilters
+  handleClearFilters,
+  handleClearCategories
 }) {
   const { mode } = useThemeMode();
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -101,6 +102,11 @@ export default function FilterSidebar({
         </AccordionSummary>
         <AccordionDetails sx={{ fontSize: '0.85rem', background: mode === 'dark' ? '#232323' : undefined, color: mode === 'dark' ? '#fff' : undefined, borderRadius: mode === 'dark' ? 1 : undefined }}>
           <FormGroup>
+            <FormControlLabel
+              control={<Checkbox checked={selectedCategories.length === 0} onChange={() => selectedCategories.length > 0 && handleClearCategories?.()} sx={{ p: 0.5, color: mode === 'dark' ? '#fff' : undefined }} />}
+              label={<span style={{ fontSize: '0.85rem', color: mode === 'dark' ? '#fff' : undefined }}>All</span>}
+              sx={{ fontSize: '0.85rem', mb: 0.5, color: mode === 'dark' ? '#fff' : undefined }}
+            />
             {visibleCategories.map(cat => (
               <FormControlLabel
                 key={cat}

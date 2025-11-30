@@ -4,8 +4,10 @@ import { Box, Paper, Stack, Typography, Skeleton, Pagination, IconButton, Button
 import { LocalOffer as LocalOfferIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, ShoppingCart as ShoppingCartIcon, CheckCircle as CheckCircleIcon, Delete as DeleteIcon, Warning as WarningIcon } from '@mui/icons-material';
 import { addItem, removeItem, clearCart } from '../../store/cartSlice';
 import toastMessage from '../../utils/toastMessage';
+import { useNavigate } from 'react-router-dom';
 
 const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageSize = 4, provider }) => {
+    const navigate = useNavigate();
     const [page, setPage] = useState(1);
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.cart.items);
@@ -107,8 +109,12 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                         p: 2,
                         alignItems: 'flex-start',
                         transition: 'transform 150ms, box-shadow 150ms',
-                        '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 }
-                    }}>
+                        '&:hover': { transform: 'translateY(-2px)', boxShadow: 3, cursor: 'pointer' }
+                    }}
+                    onClick={() => {
+                        navigate(`/service-details/${svc.id}`);
+                    }}
+                >
                     <Box
                         component="img"
                         src={svc.imageUrl}
@@ -134,7 +140,7 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                                         color="success"
                                         size="small"
                                         startIcon={<CheckCircleIcon />}
-                                        sx={{ 
+                                        sx={{
                                             minWidth: 120,
                                             pointerEvents: 'none'
                                         }}
@@ -145,7 +151,7 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                                         color="error"
                                         size="small"
                                         onClick={() => handleRemoveFromCart(svc.id)}
-                                        sx={{ 
+                                        sx={{
                                             border: '1px solid',
                                             borderColor: 'error.main',
                                             '&:hover': {
@@ -239,18 +245,18 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                         Current cart: {cartItems.length > 0 && cartItems[0].providerName}
                     </DialogContentText>
                     <DialogContentText sx={{ mt: 1 }}>
-                        To add this service from <strong>{provider?.providerName}</strong>, 
+                        To add this service from <strong>{provider?.providerName}</strong>,
                         you need to empty your current cart first.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 2, gap: 1 }}>
-                    <Button 
+                    <Button
                         onClick={handleCloseDialog}
                         variant="outlined"
                     >
                         Cancel
                     </Button>
-                    <Button 
+                    <Button
                         onClick={handleEmptyCartAndAdd}
                         variant="contained"
                         color="error"

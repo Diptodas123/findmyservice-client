@@ -45,17 +45,17 @@ const ReviewsManagement = ({ provider }) => {
 
   // Calculate statistics
   const stats = useMemo(() => {
-    const total = reviews.length;
-    const answered = reviews.filter(r => r.providerResponse).length;
-    const unanswered = total - answered;
-    const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / total;
-    
+    const total = Array.isArray(reviews) ? reviews.length : 0;
+    const answered = Array.isArray(reviews) ? reviews.filter(r => !!r?.providerResponse).length : 0;
+    const unanswered = Math.max(0, total - answered);
+    const avgRating = total ? (reviews.reduce((sum, r) => sum + (Number(r?.rating) || 0), 0) / total) : 0;
+
     const ratingDistribution = {
-      5: reviews.filter(r => r.rating === 5).length,
-      4: reviews.filter(r => r.rating === 4).length,
-      3: reviews.filter(r => r.rating === 3).length,
-      2: reviews.filter(r => r.rating === 2).length,
-      1: reviews.filter(r => r.rating === 1).length,
+      5: Array.isArray(reviews) ? reviews.filter(r => Number(r?.rating) === 5).length : 0,
+      4: Array.isArray(reviews) ? reviews.filter(r => Number(r?.rating) === 4).length : 0,
+      3: Array.isArray(reviews) ? reviews.filter(r => Number(r?.rating) === 3).length : 0,
+      2: Array.isArray(reviews) ? reviews.filter(r => Number(r?.rating) === 2).length : 0,
+      1: Array.isArray(reviews) ? reviews.filter(r => Number(r?.rating) === 1).length : 0,
     };
 
     return { total, answered, unanswered, avgRating, ratingDistribution };
@@ -63,30 +63,30 @@ const ReviewsManagement = ({ provider }) => {
 
   // Filter reviews
   const filteredReviews = useMemo(() => {
-    let filtered = reviews;
+    let filtered = Array.isArray(reviews) ? [...reviews] : [];
 
     // Filter by tab
     if (filterTab === 'answered') {
-      filtered = filtered.filter(r => r.providerResponse);
+      filtered = filtered.filter(r => !!r?.providerResponse);
     } else if (filterTab === 'unanswered') {
-      filtered = filtered.filter(r => !r.providerResponse);
+      filtered = filtered.filter(r => !r?.providerResponse);
     } else if (filterTab.endsWith('star')) {
       const rating = parseInt(filterTab[0]);
-      filtered = filtered.filter(r => r.rating === rating);
+      filtered = filtered.filter(r => Number(r?.rating) === rating);
     }
 
     // Filter by search query
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const query = String(searchQuery).toLowerCase();
       filtered = filtered.filter(r => 
-        r.userId.name.toLowerCase().includes(query) ||
-        r.comment.toLowerCase().includes(query) ||
-        r.serviceId.serviceName.toLowerCase().includes(query)
+        (String(r?.userId?.name || '')).toLowerCase().includes(query) ||
+        (String(r?.comment || '')).toLowerCase().includes(query) ||
+        (String(r?.serviceId?.serviceName || '')).toLowerCase().includes(query)
       );
     }
 
-    // Sort by date (newest first)
-    return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Sort by date (newest first) without mutating original
+    return filtered.slice().sort((a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0));
   }, [reviews, filterTab, searchQuery]);
 
   const handleOpenReply = (review) => {
@@ -196,22 +196,25 @@ const ReviewsManagement = ({ provider }) => {
       {/* Rating Distribution */}
       <Card sx={{ mb: 3, p: 2 }}>
         <Typography variant="subtitle1" gutterBottom>Rating Distribution</Typography>
-        {[5, 4, 3, 2, 1].map(rating => (
-          <Box key={rating} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 80 }}>
-              <Typography variant="body2">{rating}</Typography>
-              <StarIcon fontSize="small" sx={{ color: 'warning.main' }} />
+        {[5, 4, 3, 2, 1].map(rating => {
+          const percent = stats.total ? (stats.ratingDistribution[rating] / stats.total) * 100 : 0;
+          return (
+            <Box key={rating} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 80 }}>
+                <Typography variant="body2">{rating}</Typography>
+                <StarIcon fontSize="small" sx={{ color: 'warning.main' }} />
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={percent} 
+                sx={{ flex: 1, height: 8, borderRadius: 1 }}
+              />
+              <Typography variant="body2" sx={{ minWidth: 40, textAlign: 'right' }}>
+                {stats.ratingDistribution[rating]}
+              </Typography>
             </Box>
-            <LinearProgress 
-              variant="determinate" 
-              value={(stats.ratingDistribution[rating] / stats.total) * 100} 
-              sx={{ flex: 1, height: 8, borderRadius: 1 }}
-            />
-            <Typography variant="body2" sx={{ minWidth: 40, textAlign: 'right' }}>
-              {stats.ratingDistribution[rating]}
-            </Typography>
-          </Box>
-        ))}
+          );
+        })}
       </Card>
 
       {/* Filters and Search */}
@@ -264,28 +267,28 @@ const ReviewsManagement = ({ provider }) => {
             <Card key={review.feedbackId}>
               <CardContent>
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                  <Avatar src={review.userId.profilePicture} alt={review.userId.name} />
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {review.userId.name}
-                    </Typography>
+                    <Avatar src={review.userId?.profilePicture || ''} alt={review.userId?.name || 'User'} />
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {review?.userId?.name || 'Anonymous'}
+                      </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                      <Rating value={review.rating} size="small" readOnly />
+                      <Rating value={Number(review?.rating) || 0} size="small" readOnly />
                       <Typography variant="caption" color="text.secondary">
                         {formatDate(review.createdAt)}
                       </Typography>
                       <Chip 
-                        label={review.serviceId.serviceName} 
+                          label={review.serviceId?.serviceName || 'Service'} 
                         size="small" 
                         variant="outlined"
                       />
-                      {review.orderId && (
-                        <Chip 
-                          label={`Order: ${review.orderId.orderId}`} 
-                          size="small" 
-                          variant="outlined"
-                        />
-                      )}
+                        {review.orderId?.orderId && (
+                          <Chip 
+                            label={`Order: ${review.orderId.orderId}`} 
+                            size="small" 
+                            variant="outlined"
+                          />
+                        )}
                     </Box>
                   </Box>
                 </Box>
@@ -353,8 +356,8 @@ const ReviewsManagement = ({ provider }) => {
             <>
               <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Typography variant="subtitle2">{selectedReview.userId.name}</Typography>
-                  <Rating value={selectedReview.rating} size="small" readOnly />
+                  <Typography variant="subtitle2">{selectedReview?.userId?.name || 'Anonymous'}</Typography>
+                  <Rating value={Number(selectedReview?.rating) || 0} size="small" readOnly />
                 </Box>
                 <Typography variant="body2" color="text.secondary">
                   {selectedReview.comment}
