@@ -554,3 +554,246 @@ export const MOCK_SEARCH_SERVICES = [
         }
     }
 ];
+
+// Mock Order Data - Matches Backend Order Structure
+export const MOCK_ORDERS = [
+    {
+        orderId: 1001,
+        lineItemDTOS: [
+            {
+                lineItemId: 1,
+                serviceName: 'Plumbing Leak Repair',
+                cost: 1500.00,
+                imageUrl: 'https://atmosclear.biz/wp-content/uploads/2019/07/Atmosclear-Domestic-Plumbing.jpg',
+                quantityUnits: 1,
+                requestedDate: '2024-11-15',
+                scheduledDate: '2024-11-16'
+            }
+        ],
+        userId: { userId: 150001 },
+        providerId: {
+            providerId: 101,
+            providerName: 'ProFix Plumbing',
+            phone: '+91-98000-10101',
+            email: 'contact@profixplumbing.com'
+        },
+        orderStatus: 'COMPLETED',
+        totalCost: 1500.00,
+        transactionId: 'TXN_1001_2024',
+        paymentMethod: 'CARD',
+        stripePaymentIntentId: 'pi_1001_stripe',
+        paymentDate: '2024-11-15T10:30:00Z',
+        createdAt: '2024-11-15T09:00:00Z',
+        updatedAt: '2024-11-16T14:00:00Z'
+    },
+    {
+        orderId: 1002,
+        lineItemDTOS: [
+            {
+                lineItemId: 2,
+                serviceName: 'Deep House Cleaning',
+                cost: 2500.00,
+                imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80',
+                quantityUnits: 1,
+                requestedDate: '2024-11-10',
+                scheduledDate: '2024-11-12'
+            },
+            {
+                lineItemId: 3,
+                serviceName: 'Carpet Cleaning',
+                cost: 800.00,
+                imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+                quantityUnits: 2,
+                requestedDate: '2024-11-10',
+                scheduledDate: '2024-11-12'
+            }
+        ],
+        userId: { userId: 150001 },
+        providerId: {
+            providerId: 103,
+            providerName: 'CleanPro Services',
+            phone: '+91-98000-10103',
+            email: 'contact@cleanproservices.com'
+        },
+        orderStatus: 'PAID',
+        totalCost: 3300.00,
+        transactionId: 'TXN_1002_2024',
+        paymentMethod: 'UPI',
+        stripePaymentIntentId: 'pi_1002_stripe',
+        paymentDate: '2024-11-10T15:45:00Z',
+        createdAt: '2024-11-10T14:30:00Z',
+        updatedAt: '2024-11-10T15:45:00Z'
+    },
+    {
+        orderId: 1003,
+        lineItemDTOS: [
+            {
+                lineItemId: 4,
+                serviceName: 'AC Installation',
+                cost: 25000.00,
+                imageUrl: 'https://images.unsplash.com/photo-1635274531355-74f1b53e7c6d?w=800&q=80',
+                quantityUnits: 1,
+                requestedDate: '2024-10-25',
+                scheduledDate: '2024-10-28'
+            }
+        ],
+        userId: { userId: 150001 },
+        providerId: {
+            providerId: 104,
+            providerName: 'CoolAir AC Solutions',
+            phone: '+91-98000-10104',
+            email: 'contact@coolairsolutions.com'
+        },
+        orderStatus: 'SCHEDULED',
+        totalCost: 25000.00,
+        transactionId: 'TXN_1003_2024',
+        paymentMethod: 'CARD',
+        stripePaymentIntentId: 'pi_1003_stripe',
+        paymentDate: '2024-10-25T11:20:00Z',
+        createdAt: '2024-10-25T10:00:00Z',
+        updatedAt: '2024-10-25T11:20:00Z'
+    },
+    {
+        orderId: 1004,
+        lineItemDTOS: [
+            {
+                lineItemId: 5,
+                serviceName: 'Interior Painting',
+                cost: 4500.00,
+                imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800&q=80',
+                quantityUnits: 3,
+                requestedDate: '2024-10-15',
+                scheduledDate: null
+            }
+        ],
+        userId: { userId: 1 },
+        providerId: {
+            providerId: 106,
+            providerName: 'PaintPro Experts',
+            phone: '+91-98000-10106',
+            email: 'contact@paintproexperts.com'
+        },
+        orderStatus: 'REQUESTED',
+        totalCost: 4500.00,
+        transactionId: null,
+        paymentMethod: null,
+        stripePaymentIntentId: null,
+        paymentDate: null,
+        createdAt: '2024-10-15T16:30:00Z',
+        updatedAt: '2024-10-15T16:30:00Z'
+    },
+    {
+        orderId: 1005,
+        lineItemDTOS: [
+            {
+                lineItemId: 6,
+                serviceName: 'Custom Furniture Design',
+                cost: 15000.00,
+                imageUrl: 'https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?w=800&q=80',
+                quantityUnits: 1,
+                requestedDate: '2024-09-20',
+                scheduledDate: null
+            }
+        ],
+        userId: { userId: 1 },
+        providerId: {
+            providerId: 105,
+            providerName: 'WoodCraft Masters',
+            phone: '+91-98000-10105',
+            email: 'contact@woodcraftmasters.com'
+        },
+        orderStatus: 'CANCELLED',
+        totalCost: 15000.00,
+        transactionId: null,
+        paymentMethod: null,
+        stripePaymentIntentId: null,
+        paymentDate: null,
+        createdAt: '2024-09-20T12:00:00Z',
+        updatedAt: '2024-09-22T10:30:00Z'
+    }
+];
+
+// Mock Order API - Matches Backend API Structure
+export const mockOrderAPI = {
+    // Get orders for a specific user - Backend: GET /api/v1/orders/user/{userId}
+    getOrdersByUser: async (userId) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                try {
+                    // Filter orders by userId (simulate backend filtering)
+                    const userOrders = MOCK_ORDERS.filter(order => 
+                        Number(order.userId.userId) === Number(userId)
+                    );
+                    
+                    // Sort by creation date (newest first)
+                    const sortedOrders = userOrders.sort((a, b) => 
+                        new Date(b.createdAt) - new Date(a.createdAt)
+                    );
+                    
+                    resolve(sortedOrders);
+                } catch (error) {
+                    reject({
+                        success: false,
+                        message: 'Failed to fetch user orders'
+                    });
+                }
+            }, 800); // Simulate network delay
+        });
+    },
+
+    // Get specific order by ID - Backend: GET /api/v1/orders/{orderId}
+    getOrderById: async (orderId) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                try {
+                    const order = MOCK_ORDERS.find(o => 
+                        Number(o.orderId) === Number(orderId)
+                    );
+                    
+                    if (order) {
+                        resolve(order);
+                    } else {
+                        reject({
+                            success: false,
+                            message: 'Order not found'
+                        });
+                    }
+                } catch (error) {
+                    reject({
+                        success: false,
+                        message: 'Failed to fetch order details'
+                    });
+                }
+            }, 500);
+        });
+    },
+
+    // Create new order - Backend: POST /api/v1/orders
+    createOrder: async (orderData) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                try {
+                    const newOrder = {
+                        orderId: Math.max(...MOCK_ORDERS.map(o => o.orderId)) + 1,
+                        ...orderData,
+                        orderStatus: 'REQUESTED',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        transactionId: null,
+                        paymentMethod: null,
+                        stripePaymentIntentId: null,
+                        paymentDate: null
+                    };
+                    
+                    MOCK_ORDERS.push(newOrder);
+                    resolve(newOrder);
+                } catch (error) {
+                    reject({
+                        success: false,
+                        message: 'Failed to create order'
+                    });
+                }
+            }, 1000);
+        });
+    }
+};
