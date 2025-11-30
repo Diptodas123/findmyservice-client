@@ -23,7 +23,6 @@ export default function ServiceCard({ serviceId, name, description, image, provi
   const isInCart = cartItems.some(item => item.serviceId === serviceId);
 
   const handleCardClick = () => {
-    // Navigate to provider page
     if (providerId) {
       navigate(`/service-providers/${providerId}`);
     }
@@ -31,7 +30,7 @@ export default function ServiceCard({ serviceId, name, description, image, provi
 
   const handleAddToCart = (e) => {
     e.stopPropagation(); // Prevent card click
-    
+
     if (!fullService) {
       console.log('No fullService provided');
       return;
@@ -47,7 +46,7 @@ export default function ServiceCard({ serviceId, name, description, image, provi
     if (cartItems.length > 0) {
       const currentProviderId = cartItems[0].providerId;
       const newProviderId = fullService.providerId?.providerId;
-      
+
       if (currentProviderId !== newProviderId) {
         // Show dialog instead of toast
         setPendingService(fullService);
@@ -67,11 +66,12 @@ export default function ServiceCard({ serviceId, name, description, image, provi
       providerName: fullService.providerId?.providerName,
       location: fullService.location,
     }));
-    
+
     toastMessage('success', `${fullService.serviceName} added to cart!`);
   };
 
-  const handleEmptyCartAndAdd = () => {
+  const handleEmptyCartAndAdd = (e) => {
+    e.stopPropagation();
     // Clear cart and add new service
     dispatch(clearCart());
     if (pendingService) {
@@ -91,7 +91,8 @@ export default function ServiceCard({ serviceId, name, description, image, provi
     setPendingService(null);
   };
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = (e) => {
+    e.stopPropagation();
     setOpenDialog(false);
     setPendingService(null);
   };
@@ -108,15 +109,15 @@ export default function ServiceCard({ serviceId, name, description, image, provi
   };
 
   return (
-    <Card 
-      variant="outlined" 
+    <Card
+      variant="outlined"
       onClick={handleCardClick}
-      sx={{ 
-        height: 420, 
-        width: 285, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'flex-start', 
+      sx={{
+        height: 420,
+        width: 285,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
         mx: 'auto',
         cursor: 'pointer',
         transition: 'transform 0.2s, box-shadow 0.2s',
@@ -136,9 +137,9 @@ export default function ServiceCard({ serviceId, name, description, image, provi
         />
       )}
       {!image && (
-        <Box 
-          sx={{ 
-            height: 160, 
+        <Box
+          sx={{
+            height: 160,
             background: mode === 'dark' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             display: 'flex',
             alignItems: 'center',
@@ -153,11 +154,11 @@ export default function ServiceCard({ serviceId, name, description, image, provi
       )}
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2 }}>
         <Box>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               fontSize: name.length > 30 ? '0.95rem' : name.length > 20 ? '1.0rem' : '1.1rem',
-              fontWeight: 600, 
+              fontWeight: 600,
               mb: 0,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -193,20 +194,20 @@ export default function ServiceCard({ serviceId, name, description, image, provi
               </Box>
             )}
             {availability && (
-              <Chip 
-                label={availability} 
-                size="small" 
-                sx={{ 
-                  fontSize: '0.75rem', 
+              <Chip
+                label={availability}
+                size="small"
+                sx={{
+                  fontSize: '0.75rem',
                   height: 22,
-                  backgroundColor: availability === 'Available' ? '#4caf50' : '#f44336',
+                  backgroundColor: availability === 'AVAILABLE' ? '#4caf50' : '#f44336',
                   color: '#fff',
                   fontWeight: 500
                 }}
               />
             )}
           </Box>
-          
+
           {/* Add to Cart / Remove Button */}
           {isInCart ? (
             <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
@@ -216,7 +217,7 @@ export default function ServiceCard({ serviceId, name, description, image, provi
                 fullWidth
                 size="small"
                 startIcon={<CheckCircleIcon />}
-                sx={{ 
+                sx={{
                   textTransform: 'none',
                   fontWeight: 600,
                   pointerEvents: 'none'
@@ -228,7 +229,7 @@ export default function ServiceCard({ serviceId, name, description, image, provi
                 color="error"
                 size="small"
                 onClick={handleRemoveFromCart}
-                sx={{ 
+                sx={{
                   border: '1px solid',
                   borderColor: 'error.main',
                   borderRadius: 1,
@@ -250,7 +251,7 @@ export default function ServiceCard({ serviceId, name, description, image, provi
               startIcon={<ShoppingCartIcon />}
               onClick={handleAddToCart}
               disabled={availability === 'Not Available'}
-              sx={{ 
+              sx={{
                 mt: 1.5,
                 textTransform: 'none',
                 fontWeight: 600
@@ -281,18 +282,18 @@ export default function ServiceCard({ serviceId, name, description, image, provi
             Current cart: {cartItems.length > 0 && cartItems[0].providerName}
           </DialogContentText>
           <DialogContentText sx={{ mt: 1 }}>
-            To add this service from <strong>{pendingService?.providerId?.providerName}</strong>, 
+            To add this service from <strong>{pendingService?.providerId?.providerName}</strong>,
             you need to empty your current cart first.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button 
+          <Button
             onClick={handleCloseDialog}
             variant="outlined"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleEmptyCartAndAdd}
             variant="contained"
             color="error"

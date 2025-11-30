@@ -134,6 +134,101 @@ export const MOCK_REVIEWS = [
     }
 ]; 
 
+// Structured mock reviews for provider dashboard
+export const MOCK_PROVIDER_REVIEWS = [
+    {
+        feedbackId: 2001,
+        serviceId: { serviceId: 1, serviceName: 'Plumbing Leak Repair' },
+        userId: { userId: 501, name: 'Alice Johnson', profilePicture: 'https://images.unsplash.com/photo-1545996124-1b7a1f6a7f5c?w=200&q=80&auto=format&fit=crop' },
+        orderId: { orderId: 9001 },
+        comment: 'Quick, professional and reasonably priced. Fixed my leaky sink the same day.',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+        providerResponse: 'Thanks Alice — glad we could help!'
+    },
+    {
+        feedbackId: 2002,
+        serviceId: { serviceId: 2, serviceName: 'Emergency Plumbing' },
+        userId: { userId: 502, name: 'Marcus Lee', profilePicture: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop' },
+        comment: 'Good work but arrived a bit late. Overall satisfied with the repair.',
+        rating: 4,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
+    },
+    {
+        feedbackId: 2003,
+        serviceId: { serviceId: 3, serviceName: 'Water Heater Installation' },
+        userId: { userId: 503, name: 'Priya Kapoor', profilePicture: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&q=80&auto=format&fit=crop' },
+        comment: 'Very knowledgeable and polite. Replaced our old pipes and offered great advice.',
+        rating: 5,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 70).toISOString(),
+    }
+];
+
+export const MOCK_BOOKINGS = [
+    {
+        id: 'BKG-1001',
+        customerName: 'Ravi Sharma',
+        customerEmail: 'ravi.sharma@example.com',
+        customerPhone: '+91-91234-56789',
+        serviceName: 'Plumbing Leak Repair',
+        scheduledDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
+        scheduledTime: '10:00 AM',
+        amount: 1500,
+        status: 'pending',
+        paymentStatus: 'pending',
+        address: 'Flat 4B, 56 Palm Street, Mumbai',
+        notes: 'Please call upon arrival.',
+        createdAt: new Date().toISOString(),
+    },
+    {
+        id: 'BKG-1002',
+        customerName: 'Sneha Patel',
+        customerEmail: 'sneha.patel@example.com',
+        customerPhone: '+91-99876-54321',
+        serviceName: 'Water Heater Installation',
+        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+        scheduledTime: '2:30 PM',
+        amount: 8000,
+        status: 'confirmed',
+        paymentStatus: 'pending',
+        address: '22 Lotus Apartments, Pune',
+        notes: '',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    },
+    {
+        id: 'BKG-1003',
+        customerName: 'Arjun Verma',
+        customerEmail: 'arjun.verma@example.com',
+        customerPhone: '+91-90123-45678',
+        serviceName: 'Drain Cleaning',
+        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+        scheduledTime: '9:00 AM',
+        amount: 1200,
+        status: 'completed',
+        paymentStatus: 'paid',
+        address: '10 Green Lane, Chennai',
+        notes: 'Customer satisfied with service.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40).toISOString(),
+        completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 29).toISOString(),
+    },
+    {
+        id: 'BKG-1004',
+        customerName: 'Priya Singh',
+        customerEmail: 'priya.singh@example.com',
+        customerPhone: '+91-98765-43210',
+        serviceName: 'Emergency Plumbing',
+        scheduledDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+        scheduledTime: '11:15 AM',
+        amount: 2500,
+        status: 'cancelled',
+        paymentStatus: 'refunded',
+        address: '5 Rose Street, Delhi',
+        notes: 'Customer cancelled due to schedule conflict.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
+        cancelledAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    }
+];
+
 export const SAMPLE_SEVICES_FOR_RECOMMENDATION = [
     { serviceName: 'Home Cleaning' },
     { serviceName: 'Plumbing' },

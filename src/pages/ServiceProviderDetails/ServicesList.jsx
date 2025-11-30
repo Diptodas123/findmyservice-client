@@ -4,8 +4,10 @@ import { Box, Paper, Stack, Typography, Skeleton, Pagination, IconButton, Button
 import { LocalOffer as LocalOfferIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, ShoppingCart as ShoppingCartIcon, CheckCircle as CheckCircleIcon, Delete as DeleteIcon, Warning as WarningIcon } from '@mui/icons-material';
 import { addItem, removeItem, clearCart } from '../../store/cartSlice';
 import toastMessage from '../../utils/toastMessage';
+import { useNavigate } from 'react-router-dom';
 
 const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageSize = 4, provider }) => {
+    const navigate = useNavigate();
     const [page, setPage] = useState(1);
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.cart.items);
@@ -15,7 +17,7 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
 
     const handleAddToCart = (service) => {
         // Check if already in cart
-        const isInCart = cartItems.some(item => item.serviceId === service.id);
+        const isInCart = cartItems.some(item => item.serviceId === service.serviceId);
         if (isInCart) {
             toastMessage('info', 'This service is already in your cart');
             return;
@@ -33,16 +35,16 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
         }
 
         dispatch(addItem({
-            serviceId: service.id,
-            serviceName: service.name,
+            serviceId: service.serviceId,
+            serviceName: service.serviceName,
             description: service.description,
             imageUrl: service.imageUrl,
             providerId: provider?.providerId,
             providerName: provider?.providerName,
-            location: provider?.city,
-            cost: service.price || 0,
+            location: service.location || provider?.city,
+            cost: service.cost || 0,
         }));
-        toastMessage('success', `${service.name} added to cart!`);
+        toastMessage('success', `${service.serviceName} added to cart!`);
     };
 
     const handleEmptyCartAndAdd = () => {
@@ -50,22 +52,22 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
         dispatch(clearCart());
         if (pendingService && provider) {
             dispatch(addItem({
-                serviceId: pendingService.id,
-                serviceName: pendingService.name,
+                serviceId: pendingService.serviceId,
+                serviceName: pendingService.serviceName,
                 description: pendingService.description,
                 imageUrl: pendingService.imageUrl,
                 providerId: provider.providerId,
                 providerName: provider.providerName,
-                location: provider.city,
-                cost: pendingService.price || 0,
+                location: pendingService.location || provider.city,
+                cost: pendingService.cost || 0,
             }));
-            toastMessage('success', `Cart cleared. ${pendingService.name} added to cart!`);
+            toastMessage('success', `Cart cleared. ${pendingService.serviceName} added to cart!`);
         }
         setOpenDialog(false);
         setPendingService(null);
     };
 
-    const handleCloseDialog = () => {
+    const handleCloseDialog = (e) => {
         setOpenDialog(false);
         setPendingService(null);
     };
@@ -100,19 +102,23 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
     return (
         <Stack spacing={2}>
             {visible.map((svc) => (
-                <Paper key={svc.id}
+                <Paper key={svc.serviceId}
                     sx={{
                         display: 'flex',
                         gap: 2,
                         p: 2,
                         alignItems: 'flex-start',
                         transition: 'transform 150ms, box-shadow 150ms',
-                        '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 }
-                    }}>
+                        '&:hover': { transform: 'translateY(-2px)', boxShadow: 3, cursor: 'pointer' }
+                    }}
+                    onClick={() => {
+                        navigate(`/service-details/${svc.serviceId}`);
+                    }}
+                >
                     <Box
                         component="img"
                         src={svc.imageUrl}
-                        alt={svc.name}
+                        alt={svc.serviceName}
                         sx={{
                             width: 96, height: 72, objectFit: 'cover', borderRadius: 1
                         }} />
@@ -121,20 +127,20 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                             <Stack spacing={1}>
                                 <Stack direction="row" spacing={1} alignItems="center">
                                     <LocalOfferIcon color="primary" />
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{svc.name}</Typography>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{svc.serviceName}</Typography>
                                 </Stack>
                                 <Typography variant="body2" color="text.secondary">
                                     {truncate(svc.description, 140)}
                                 </Typography>
                             </Stack>
-                            {cartItems.some(item => item.serviceId === svc.id) ? (
+                            {cartItems.some(item => item.serviceId === svc.serviceId) ? (
                                 <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, ml: 2 }}>
                                     <Button
                                         variant="outlined"
                                         color="success"
                                         size="small"
                                         startIcon={<CheckCircleIcon />}
-                                        sx={{ 
+                                        sx={{
                                             minWidth: 120,
                                             pointerEvents: 'none'
                                         }}
@@ -144,8 +150,11 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                                     <IconButton
                                         color="error"
                                         size="small"
-                                        onClick={() => handleRemoveFromCart(svc.id)}
-                                        sx={{ 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveFromCart(svc.serviceId);
+                                        }}
+                                        sx={{
                                             border: '1px solid',
                                             borderColor: 'error.main',
                                             '&:hover': {
@@ -163,7 +172,10 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                                     color="primary"
                                     size="small"
                                     startIcon={<ShoppingCartIcon />}
-                                    onClick={() => handleAddToCart(svc)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddToCart(svc);
+                                    }}
                                     sx={{ minWidth: 120, flexShrink: 0, ml: 2 }}
                                 >
                                     Add to Cart
@@ -239,19 +251,25 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                         Current cart: {cartItems.length > 0 && cartItems[0].providerName}
                     </DialogContentText>
                     <DialogContentText sx={{ mt: 1 }}>
-                        To add this service from <strong>{provider?.providerName}</strong>, 
+                        To add this service from <strong>{provider?.providerName}</strong>,
                         you need to empty your current cart first.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 2, gap: 1 }}>
-                    <Button 
-                        onClick={handleCloseDialog}
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleCloseDialog();
+                        }}
                         variant="outlined"
                     >
                         Cancel
                     </Button>
-                    <Button 
-                        onClick={handleEmptyCartAndAdd}
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleEmptyCartAndAdd();
+                        }}
                         variant="contained"
                         color="error"
                         startIcon={<ShoppingCartIcon />}
