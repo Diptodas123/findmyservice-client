@@ -103,38 +103,79 @@ const Contact = () => {
         : 'linear-gradient(180deg, #f5f5f5 0%, #e8f4f8 100%)'
     }}>
       <Container maxWidth="lg">
-        <Typography 
-          variant="h3" 
-          component="h1" 
-          gutterBottom 
-          align="center"
-          sx={{ 
-            fontWeight: 700,
-            mb: 1,
-            color: mode === 'dark' ? '#fff' : '#1a1a1a',
-            background: mode === 'dark' 
-              ? 'linear-gradient(45deg, #90caf9, #64b5f6)'
-              : 'linear-gradient(45deg, #1976d2, #2196f3)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}
-        >
-          Contact Us
-        </Typography>
-        <Typography 
-          variant="h6" 
-          align="center" 
-          color="text.secondary" 
-          sx={{ mb: 6, maxWidth: 700, mx: 'auto', fontWeight: 400 }}
-        >
-          Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-        </Typography>
+        {/* Header Section */}
+        <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Typography 
+            variant="h2" 
+            component="h1" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 800,
+              mb: 2,
+              fontSize: { xs: '2.5rem', md: '3.5rem' },
+              background: mode === 'dark' 
+                ? 'linear-gradient(45deg, #90caf9 30%, #64b5f6 60%, #42a5f5 90%)'
+                : 'linear-gradient(45deg, #1976d2 30%, #2196f3 60%, #64b5f6 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              textShadow: mode === 'dark' 
+                ? '0 4px 8px rgba(144, 202, 249, 0.3)'
+                : '0 4px 8px rgba(25, 118, 210, 0.2)',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -8,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 80,
+                height: 4,
+                background: mode === 'dark' 
+                  ? 'linear-gradient(90deg, #90caf9, #64b5f6)'
+                  : 'linear-gradient(90deg, #1976d2, #2196f3)',
+                borderRadius: 2
+              }
+            }}
+          >
+            Contact Us
+          </Typography>
+          <Typography 
+            variant="h5" 
+            align="center" 
+            color="text.secondary" 
+            sx={{ 
+              mb: 3, 
+              maxWidth: 600, 
+              mx: 'auto', 
+              fontWeight: 400,
+              fontSize: { xs: '1.1rem', md: '1.5rem' },
+              lineHeight: 1.6
+            }}
+          >
+            Have questions? We'd love to hear from you.
+          </Typography>
+          <Typography 
+            variant="body1" 
+            align="center" 
+            color="text.secondary" 
+            sx={{ 
+              maxWidth: 500, 
+              mx: 'auto', 
+              fontWeight: 300,
+              fontSize: '1rem',
+              opacity: 0.8
+            }}
+          >
+            Send us a message and we'll respond as soon as possible.
+          </Typography>
+        </Box>
 
-        <Grid container spacing={4}>
-          {/* Left side - Contact Information and Business Hours */}
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+          <Grid container spacing={4} sx={{ maxWidth: 1200, width: '100%' }}>
+            {/* Left side - Contact Information and Business Hours */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {/* Contact Information Cards */}
               {contactInfo.map((info, index) => (
                 <Paper
@@ -355,6 +396,7 @@ const Contact = () => {
             </Paper>
           </Grid>
         </Grid>
+        </Box>
       </Container>
     </Box>
   );
