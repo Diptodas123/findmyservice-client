@@ -62,8 +62,7 @@ const ContactCard = ({ provider, loading, onCall, onEmail }) => {
                         Enquire via Email
                     </Button>
                     <Divider />
-                    <Stack direction="row" spacing={1}>
-                        <Chip icon={<ContactsIcon />} label={`Provider ID: ${provider.providerId}`} />
+                    <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} justifyContent="center" alignItems="center">
                         <Chip icon={<CalendarTodayIcon />} label={`Joined: ${new Date(provider.createdAt).toLocaleDateString()}`} />
                     </Stack>
                 </Stack>

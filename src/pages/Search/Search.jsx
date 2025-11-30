@@ -16,9 +16,9 @@ import {
   toggleRating,
   setSortBy,
   clearFilters,
+  clearCategories,
   setServices,
   setLoading,
-  setError,
 } from '../../store/searchSlice';
 
 export default function Search() {
@@ -153,6 +153,8 @@ export default function Search() {
     }
   });
 
+  const noResults = !loading && !error && sortedServices.length === 0;
+
   // Handlers
   const handleCategoryChange = (cat) => {
     dispatch(toggleCategory(cat));
@@ -164,6 +166,10 @@ export default function Search() {
 
   const handleClearFilters = () => {
     dispatch(clearFilters());
+  };
+
+  const handleClearCategories = () => {
+    dispatch(clearCategories());
   };
 
   const handleSetQuery = (value) => {
@@ -228,6 +234,7 @@ export default function Search() {
             selectedRatings={selectedRatings}
             handleRatingChange={handleRatingChange}
             handleClearFilters={handleClearFilters}
+            handleClearCategories={handleClearCategories}
           />
         </Box>
 
@@ -242,28 +249,38 @@ export default function Search() {
         }} />
 
         {/* Results Section */}
-        <Box sx={{ flex: 1, p: { xs: 2, sm: 3 }, overflowX: 'auto' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              Search Services
-            </Typography>
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel>Sort By</InputLabel>
-              <Select
-                value={sortBy}
-                label="Sort By"
-                onChange={(e) => dispatch(setSortBy(e.target.value))}
-              >
-                <MenuItem value="relevance">Relevance</MenuItem>
-                <MenuItem value="price-low">Price: Low to High</MenuItem>
-                <MenuItem value="price-high">Price: High to Low</MenuItem>
-                <MenuItem value="rating-high">Rating: High to Low</MenuItem>
-                <MenuItem value="rating-low">Rating: Low to High</MenuItem>
-                <MenuItem value="name-asc">Name: A to Z</MenuItem>
-                <MenuItem value="name-desc">Name: Z to A</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+        <Box sx={{
+          flex: 1,
+          p: noResults ? 0 : { xs: 2, sm: 3 },
+          overflowX: 'auto',
+          display: noResults ? 'flex' : undefined,
+          alignItems: noResults ? 'center' : undefined,
+          justifyContent: noResults ? 'center' : undefined,
+          minHeight: noResults ? 'calc(100vh - 120px)' : undefined
+        }}>
+          {!noResults && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 } }}>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                Search Services
+              </Typography>
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <InputLabel>Sort By</InputLabel>
+                <Select
+                  value={sortBy}
+                  label="Sort By"
+                  onChange={(e) => dispatch(setSortBy(e.target.value))}
+                >
+                  <MenuItem value="relevance">Relevance</MenuItem>
+                  <MenuItem value="price-low">Price: Low to High</MenuItem>
+                  <MenuItem value="price-high">Price: High to Low</MenuItem>
+                  <MenuItem value="rating-high">Rating: High to Low</MenuItem>
+                  <MenuItem value="rating-low">Rating: Low to High</MenuItem>
+                  <MenuItem value="name-asc">Name: A to Z</MenuItem>
+                  <MenuItem value="name-desc">Name: Z to A</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
 
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -277,50 +294,61 @@ export default function Search() {
             </Alert>
           )}
 
-          {!loading && !error && (
-            <>
+          {noResults ? (
+            <Box sx={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%',
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
+              <Box sx={{ width: 180, height: 160, mb: 3 }}>
+                {/* Simple inline illustration */}
+                <svg viewBox="0 0 64 56" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                  <g fill="none" fillRule="evenodd">
+                    <path d="M32 4c8.837 0 16 7.163 16 16v4H16v-4c0-8.837 7.163-16 16-16z" fill="#E6F2FF"/>
+                    <rect x="6" y="28" width="52" height="20" rx="3" fill="#F5F7FA" />
+                    <path d="M20 34h24v2H20zM20 38h24v2H20z" fill="#D1E3FF"/>
+                    <circle cx="46" cy="18" r="4" fill="#B3DBFF" />
+                  </g>
+                </svg>
+              </Box>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                No services found
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Try adjusting your filters or search query
+              </Typography>
+            </Box>
+          ) : !loading && !error && (
+            <Box sx={{ px: { xs: 2, sm: 3 } }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {sortedServices.length} service{sortedServices.length !== 1 ? 's' : ''} found
               </Typography>
 
               <Grid container spacing={3}>
-                {sortedServices.length === 0 ? (
-                  <Grid item xs={12}>
-                    <Box sx={{ 
-                      textAlign: 'center', 
-                      py: 8,
-                      background: mode === 'dark' ? '#2a2a2a' : '#f5f5f5',
-                      borderRadius: 2
-                    }}>
-                      <Typography variant="h6" gutterBottom>
-                        No services found
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Try adjusting your filters or search query
-                      </Typography>
-                    </Box>
+                {sortedServices.map(service => (
+                  <Grid item xs={12} sm={6} md={4} key={service.serviceId}>
+                    <ServiceCard
+                      serviceId={service.serviceId}
+                      name={service.serviceName}
+                      description={service.description}
+                      image={service.imageUrl}
+                      provider={service.providerId?.providerName}
+                      price={service.cost}
+                      rating={service.avgRating}
+                      location={service.location}
+                      availability={service.availability}
+                      providerId={service.providerId?.providerId}
+                      fullService={service}
+                    />
                   </Grid>
-                ) : (
-                  sortedServices.map(service => (
-                    <Grid item xs={12} sm={6} md={4} key={service.serviceId}>
-                      <ServiceCard
-                        serviceId={service.serviceId}
-                        name={service.serviceName}
-                        description={service.description}
-                        image={service.imageUrl}
-                        provider={service.providerId?.providerName}
-                        price={service.cost}
-                        rating={service.avgRating}
-                        location={service.location}
-                        availability={service.availability}
-                        providerId={service.providerId?.providerId}
-                        fullService={service}
-                      />
-                    </Grid>
-                  ))
-                )}
+                ))}
               </Grid>
-            </>
+            </Box>
           )}
         </Box>
       </Paper>

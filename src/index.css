@@ -12,20 +12,43 @@ code {
     monospace;
 }
 
-/* Hide vertical scrollbar but keep scrolling functional */
-/* WebKit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 0px;
   height: 0px;
 }
 
-/* Firefox */
 html {
-  scrollbar-width: none; /* hide scrollbar */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  /* hide scrollbar */
+  -ms-overflow-style: none;
+  /* IE and Edge */
 }
 
-/* Ensure scrollable elements keep pointer events */
-body, #root {
+body,
+#root {
   -webkit-overflow-scrolling: touch;
+}
+
+/* Background for auth pages */
+.login-bg {
+  background-image: url('/login-bg.avif');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 0;
+}
+
+.login-bg>* {
+  z-index: 1;
 }

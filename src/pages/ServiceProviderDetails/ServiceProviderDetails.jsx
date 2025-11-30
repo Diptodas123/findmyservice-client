@@ -35,7 +35,9 @@ import ReviewsList from './ReviewsList';
 import ContactCard from './ContactCard';
 
 const ServiceProviderDetails = () => {
-    const { providerId } = useParams();
+    const params = useParams();
+    // Route may provide either `id` or `providerId` depending on routing usage.
+    const providerId = params.providerId || params.id;
     const navigate = useNavigate();
     const [provider, setProvider] = useState(null);
     const [loading, setLoading] = useState(true);

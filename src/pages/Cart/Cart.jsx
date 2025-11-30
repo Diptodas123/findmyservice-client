@@ -24,10 +24,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { removeItem, clearCart } from '../../store/cartSlice';
 import formatINR from '../../utils/formatCurrency';
 import toastMessage from '../../utils/toastMessage';
-import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
-    const navigate = useNavigate();
 
     const items = useSelector((s) => s.cart.items || []);
     const dispatch = useDispatch();
@@ -53,30 +51,6 @@ const Cart = () => {
     return (
         <Box sx={{ maxWidth: 1100, mx: 'auto', p: { xs: 2, md: 4 } }}>
             <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>Cart & Checkout</Typography>
-
-            <Paper sx={{ p: 2, mb: 2 }} elevation={1}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center">
-                    <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar src={user.profilePictureUrl || ''}
-                            sx={{ bgcolor: 'primary.main', width: 56, height: 56, fontSize: 20 }}>
-                            {!user?.profilePictureUrl && (user?.name || 'G')[0]}
-                        </Avatar>
-                        <Box>
-                            <Typography sx={{ fontWeight: 800 }}>{user.name || 'Guest User'}</Typography>
-                            <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-                            <Typography variant="body2" color="text.secondary">{user.phone}</Typography>
-                        </Box>
-                    </Stack>
-
-                    <Stack direction="row" spacing={1} sx={{ mt: { xs: 2, sm: 0 } }}>
-                        <Button onClick={() => navigate('/profile')}
-                            startIcon={<EditIcon />}
-                            variant="outlined">
-                            Edit Profile
-                        </Button>
-                    </Stack>
-                </Stack>
-            </Paper>
 
             {items?.length === 0 ? (
                 <Paper sx={{ p: { xs: 4, md: 8 }, textAlign: 'center' }}>

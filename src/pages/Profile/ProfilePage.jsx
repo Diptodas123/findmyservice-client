@@ -10,9 +10,11 @@ import {
   TextField,
   Button,
   Avatar,
-  Stack
+  Stack,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
-import { PhotoCamera, Delete } from '@mui/icons-material';
+import { PhotoCamera, Delete, Visibility, VisibilityOff } from '@mui/icons-material';
 import cloudinary from '../../utils/cloudinary';
 import toastMessage from '../../utils/toastMessage';
 import apiClient from '../../utils/apiClient';
@@ -26,6 +28,11 @@ const ProfilePage = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [showPassword, setShowPassword] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false
+  });
 
   const [formData, setFormData] = useState({
     name: reduxProfile?.name || '',
@@ -99,6 +106,10 @@ const ProfilePage = () => {
     return phoneRegex.test(phone.replace(/\s/g, ''));
   };
 
+  const validatePasswordStrength = (password) => {
+    return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/.test(password);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFieldErrors({});
@@ -133,7 +144,7 @@ const ProfilePage = () => {
       const optimistic = { ...prev, ...payload };
       dispatch(setUser(optimistic));
 
-      const res = await apiClient.put(`/api/v1/users/${reduxProfile.userId}`, payload);
+      const res = await apiClient.patch(`/api/v1/users/${reduxProfile.userId}`, payload);
 
       if (res && (res.profile || res.user)) {
         const updated = res.profile || res.user;
@@ -158,14 +169,88 @@ const ProfilePage = () => {
     }
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
-    if (formData.newPassword !== formData.confirmPassword) {
-      toast.error('Passwords do not match!');
+    setFieldErrors({});
+
+    const errors = {};
+
+    if (!formData.currentPassword || !formData.currentPassword.trim()) {
+      errors.currentPassword = 'Current password is required';
+    }
+
+    if (!formData.newPassword || !formData.newPassword.trim()) {
+      errors.newPassword = 'New password is required';
+    } else if (!validatePasswordStrength(formData.newPassword)) {
+      errors.newPassword = 'Password must be at least 8 characters and include a letter, number, and special character';
+    } else if (formData.currentPassword === formData.newPassword) {
+      errors.newPassword = 'New password must be different from current password';
+    }
+
+    if (!formData.confirmPassword || !formData.confirmPassword.trim()) {
+      errors.confirmPassword = 'Please confirm your new password';
+    } else if (formData.newPassword !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const firstKey = Object.keys(errors)[0];
+      const el = document.querySelector(`[name="${firstKey}"]`);
+      if (el) el.focus();
       return;
     }
-    toast.success('Password changed successfully!');
-    setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+
+    setLoading(true);
+
+    const prev = { ...reduxProfile };
+
+    try {
+      const payload = {
+        currentPassword: formData.currentPassword,
+        password: formData.newPassword,
+      };
+
+      const res = await apiClient.patch(`/api/v1/users/${reduxProfile.userId}`, payload);
+
+      if (res && (res.profile || res.user)) {
+        const updated = res.profile || res.user;
+        dispatch(setUser(updated));
+      }
+
+      toastMessage({ msg: 'Password changed successfully!', type: 'success' });
+      
+      // Clear password fields
+      setFormData(prev => ({ 
+        ...prev, 
+        currentPassword: '', 
+        newPassword: '', 
+        confirmPassword: '' 
+      }));
+
+      // Reset password visibility
+      setShowPassword({
+        currentPassword: false,
+        newPassword: false,
+        confirmPassword: false
+      });
+
+    } catch (err) {
+      dispatch(setUser(prev || {}));
+      if (err?.response && err.response.errors) {
+        setFieldErrors(err.response.errors);
+      }
+      
+      const errorMsg = err?.userMessage || err?.message || 'Failed to change password';
+      
+      if (!err?.isNetworkError) {
+        toastMessage({ msg: errorMsg, type: 'error' });
+      }
+      
+      console.error('Password change failed', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderPersonalInfo = () => (
@@ -236,9 +321,75 @@ const ProfilePage = () => {
       <Box component="form" onSubmit={handlePasswordChange}>
         <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>Change Password</Typography>
         <Stack spacing={3}>
-          <TextField fullWidth label="Current Password" name="currentPassword" type="password" value={formData.currentPassword} onChange={handleInputChange} error={!!fieldErrors.currentPassword} helperText={fieldErrors.currentPassword || ''} placeholder="Enter current password" />
-          <TextField fullWidth label="New Password" name="newPassword" type="password" value={formData.newPassword} onChange={handleInputChange} error={!!fieldErrors.newPassword} helperText={fieldErrors.newPassword || ''} placeholder="Enter new password" />
-          <TextField fullWidth label="Confirm New Password" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleInputChange} error={!!fieldErrors.confirmPassword} helperText={fieldErrors.confirmPassword || ''} placeholder="Confirm new password" />
+          <TextField 
+            fullWidth 
+            label="Current Password" 
+            name="currentPassword" 
+            type={showPassword.currentPassword ? "text" : "password"} 
+            value={formData.currentPassword} 
+            onChange={handleInputChange} 
+            error={!!fieldErrors.currentPassword} 
+            helperText={fieldErrors.currentPassword || ''} 
+            placeholder="Enter current password"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(prev => ({ ...prev, currentPassword: !prev.currentPassword }))}
+                    edge="end"
+                  >
+                    {showPassword.currentPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+          <TextField 
+            fullWidth 
+            label="New Password" 
+            name="newPassword" 
+            type={showPassword.newPassword ? "text" : "password"} 
+            value={formData.newPassword} 
+            onChange={handleInputChange} 
+            error={!!fieldErrors.newPassword} 
+            helperText={fieldErrors.newPassword || ''} 
+            placeholder="Enter new password"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(prev => ({ ...prev, newPassword: !prev.newPassword }))}
+                    edge="end"
+                  >
+                    {showPassword.newPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+          <TextField 
+            fullWidth 
+            label="Confirm New Password" 
+            name="confirmPassword" 
+            type={showPassword.confirmPassword ? "text" : "password"} 
+            value={formData.confirmPassword} 
+            onChange={handleInputChange} 
+            error={!!fieldErrors.confirmPassword} 
+            helperText={fieldErrors.confirmPassword || ''} 
+            placeholder="Confirm new password"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
+                    edge="end"
+                  >
+                    {showPassword.confirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
         </Stack>
         <Button type="submit" variant="contained" color="primary" disabled={loading} sx={(theme) => ({ ...(theme.palette.mode === 'dark' ? { color: theme.palette.background.dark, backgroundColor: theme.palette.primary.dark, '&:hover': { backgroundColor: 'rgba(255,255,255,0.04)' }, '& .MuiButton-startIcon': { color: theme.palette.background.dark }, mt: 3 } : { mt: 3 }) })}>
           {loading ? 'Saving...' : 'Change Password'}

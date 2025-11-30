@@ -96,5 +96,6 @@ export default {
     post: (path, body, opts = {}) => request({ ...opts, method: 'POST', path, body }),
     put: (path, body, opts = {}) => request({ ...opts, method: 'PUT', path, body }),
     del: (path, opts = {}) => request({ ...opts, method: 'DELETE', path }),
+    patch: (path, body, opts = {}) => request({ ...opts, method: 'PATCH', path, body }),
     request,
 };
