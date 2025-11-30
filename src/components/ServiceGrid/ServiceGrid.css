@@ -17,10 +17,16 @@
     display: flex;
     flex-direction: column;
     background: #fff;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.sg-card:hover {
+    transform: translateY(-4px);
+    box-shadow: rgba(50, 50, 93, 0.35) 0px 20px 35px -5px, rgba(0, 0, 0, 0.4) 0px 12px 20px -8px;
 }
 
 .sg-rounded {
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -28,18 +34,22 @@
 }
 
 .sg-image {
+    width: 100%;
+    height: 100%;
     background-size: cover;
     background-position: center;
     display: flex;
     align-items: stretch;
     position: relative;
+    overflow: hidden;
 }
 
 .sg-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block
+    object-position: center;
+    display: block;
 }
 
 .sg-overlay {
@@ -47,25 +57,28 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 4px 6px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4));
+    padding: 8px 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 45px;
 }
 
 .sg-overlay .sg-title {
     color: #fff;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     margin: 0;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .sg-title {
     margin: 0;
     font-weight: 600;
     text-align: center;
-    font-size: 0.78rem;
-    line-height: 1.05;
+    font-size: 0.85rem;
+    line-height: 1.2;
 }
 
 @media (max-width: 480px) {

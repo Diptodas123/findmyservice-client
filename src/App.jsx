@@ -10,6 +10,7 @@ import Signup from './pages/Signup/Signup.jsx';
 import ServiceProviderDetails from './pages/ServiceProviderDetails/ServiceProviderDetails.jsx';
 import ServiceDetails from './pages/ServiceDetails/ServiceDetails.jsx';
 import Cart from './pages/Cart/Cart.jsx';
+import Search from './pages/Search/Search.jsx';
 
 function App() {
   return (
@@ -21,7 +22,8 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />
+        <Route path="/search" element={<Search />} />
+        <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
         <Route path='/service-details/:id' element={<ServiceDetails />} />
         <Route path="/cart" element={<Cart />} />
         </Routes>
