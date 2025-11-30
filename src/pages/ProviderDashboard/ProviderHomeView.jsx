@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo, memo } from 'react';
+import { useDispatch } from 'react-redux';
 import { Box, Typography, Paper, Button, Grid, Avatar, Stack, Dialog, DialogTitle, DialogContent, TextField, CircularProgress, IconButton, Rating } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
@@ -6,6 +7,9 @@ import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import { MOCK_PROVIDER } from '../../../mockData';
 import cloudinary from '../../utils/cloudinary';
+import apiClient from '../../utils/apiClient';
+import toastMessage from '../../utils/toastMessage';
+import { updateProvider } from '../../store/providerSlice';
 
 const PhotoThumbnail = memo(function PhotoThumbnail({ src, onClick, onRemove, width = 120, height = 80 }) {
   return (
@@ -37,11 +41,13 @@ const PhotoThumbnail = memo(function PhotoThumbnail({ src, onClick, onRemove, wi
 
 
 const ProviderHomeView = ({ provider: providerProp, setProvider: setProviderProp, hideHero = false }) => {
+  const dispatch = useDispatch();
   const initial = providerProp ? { ...providerProp } : { ...MOCK_PROVIDER };
   const [p, setPLocal] = useState(initial);
   const setP = setProviderProp || setPLocal;
   const [openEdit, setOpenEdit] = useState(false);
   const [form, setForm] = useState(initial);
+  const [saving, setSaving] = useState(false);
   const [uploadingDialog, setUploadingDialog] = useState(false);
   const fileRefDialog = useRef(null);
   const heroImage = (providerProp ? providerProp.imageUrls?.[0] : p.imageUrls?.[0]) || '/banner.jpg';
@@ -192,10 +198,40 @@ const ProviderHomeView = ({ provider: providerProp, setProvider: setProviderProp
             </Box>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
               <Button onClick={() => setOpenEdit(false)}>Cancel</Button>
-              <Button variant="contained" onClick={() => {
-                setP(prev => ({ ...prev, ...form, imageUrls: form.imageUrls, profilePictureUrl: form.profilePictureUrl }));
-                setOpenEdit(false);
-              }}>Save</Button>
+              <Button
+                variant="contained"
+                onClick={async () => {
+                  try {
+                    setSaving(true);
+                    const payload = { ...form };
+                    const providerId = payload.providerId || payload.providerId === 0 ? payload.providerId : p.providerId || payload.providerId || undefined;
+                    // prefer providerProp providerId if present
+                    const id = providerProp?.providerId || p?.providerId || providerId;
+                    if (!id) {
+                      toastMessage({ msg: 'Unable to determine provider id for update', type: 'error' });
+                      return;
+                    }
+
+                    const res = await apiClient.patch(`/api/v1/providers/${id}`, payload);
+                    // Use the response data to update state
+                    const updatedProvider = res.data || res;
+                    setP(prev => ({ ...prev, ...updatedProvider }));
+                    if (setProviderProp) setProviderProp(prev => ({ ...prev, ...updatedProvider }));
+                    // Update Redux store
+                    dispatch(updateProvider(updatedProvider));
+                    toastMessage({ msg: 'Profile updated successfully', type: 'success' });
+                    setOpenEdit(false);
+                  } catch (err) {
+                    console.error('Failed to update provider:', err);
+                    toastMessage({ msg: err?.userMessage || 'Failed to update profile. Please try again.', type: 'error' });
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
             </Box>
           </Box>
         </DialogContent>

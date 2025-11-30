@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 
 import toastMessage from '../../utils/toastMessage';
-import { MOCK_PROVIDER, MOCK_REVIEWS, getProviderById } from '../../../mockData';
+import apiClient from '../../utils/apiClient';
 
 import HeaderBlock from './HeaderBlock';
 import PhotosGrid from './PhotosGrid';
@@ -35,11 +35,14 @@ import ReviewsList from './ReviewsList';
 import ContactCard from './ContactCard';
 
 const ServiceProviderDetails = () => {
+    console.log('Rendering ServiceProviderDetails component');
+    
     const params = useParams();
     // Route may provide either `id` or `providerId` depending on routing usage.
     const providerId = params.providerId || params.id;
     const navigate = useNavigate();
     const [provider, setProvider] = useState(null);
+    const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedReviewIds, setExpandedReviewIds] = useState([]);
 
@@ -49,20 +52,43 @@ const ServiceProviderDetails = () => {
     const reviewsRef = useRef(null);
 
     useEffect(() => {
-        // Simulate API call with delay
-        console.log('Loading provider with ID:', providerId);
-        setLoading(true);
-        setTimeout(() => {
-            const providerData = getProviderById(providerId);
-            console.log('Provider data:', providerData);
-            if (!providerData) {
-                toastMessage('error', 'Provider not found');
+        const fetchProviderDetails = async () => {
+            console.log('Loading provider with ID:', providerId);
+            setLoading(true);
+            try {
+                // Fetch provider details from API
+                const response = await apiClient.get(`/api/v1/providers/${providerId}`);
+                const providerData = response.data || response;
+                
+                console.log('Provider data:', providerData);
+                if (!providerData) {
+                    toastMessage({ msg: 'Provider not found', type: 'error' });
+                    navigate('/search');
+                    return;
+                }
+                setProvider(providerData);
+                
+                // Fetch reviews for this provider
+                try {
+                    const reviewsResponse = await apiClient.get(`/api/v1/providers/${providerId}/reviews`);
+                    const reviewsData = reviewsResponse.data || reviewsResponse;
+                    setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+                } catch (reviewError) {
+                    console.error('Error fetching reviews:', reviewError);
+                    setReviews([]);
+                }
+            } catch (error) {
+                console.error('Error fetching provider:', error);
+                toastMessage({ msg: 'Failed to load provider details', type: 'error' });
                 navigate('/search');
-                return;
+            } finally {
+                setLoading(false);
             }
-            setProvider(providerData);
-            setLoading(false);
-        }, 500);
+        };
+        
+        if (providerId) {
+            fetchProviderDetails();
+        }
     }, [providerId, navigate]);
 
     const scrollTo = (ref) => {
@@ -109,7 +135,7 @@ const ServiceProviderDetails = () => {
     }, [lightboxOpen, nextImage, prevImage]);
 
     const sortedReviews = React.useMemo(() => {
-        const arr = [...MOCK_REVIEWS];
+        const arr = [...reviews];
         switch (reviewSort) {
             case 'newest':
                 return arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -122,7 +148,7 @@ const ServiceProviderDetails = () => {
             default:
                 return arr;
         }
-    }, [reviewSort]);
+    }, [reviews, reviewSort]);
 
     const handleCall = () => {
         if (provider?.phone) {

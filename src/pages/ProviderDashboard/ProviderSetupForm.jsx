@@ -171,7 +171,8 @@ const ProviderSetupForm = () => {
       if (profilePicture) {
         try {
           setUploadingImages(true);
-          profilePictureUrl = await cloudinary.uploadImage(profilePicture);
+          const result = await cloudinary.uploadImage(profilePicture);
+          profilePictureUrl = result?.secure_url || result?.url || profilePictureUrl;
         } catch (uploadErr) {
           console.error('Profile picture upload failed:', uploadErr);
           toastMessage({ msg: 'Failed to upload profile picture. Continuing without it.', type: 'warning' });
@@ -186,7 +187,8 @@ const ProviderSetupForm = () => {
           
           const uploadPromises = businessImages.map(async (file) => {
             try {
-              return await cloudinary.uploadImage(file);
+              const result = await cloudinary.uploadImage(file);
+              return result?.secure_url || result?.url || null;
             } catch (err) {
               console.error('Failed to upload image:', err);
               return null;
@@ -223,7 +225,7 @@ const ProviderSetupForm = () => {
       };
 
       // Update provider details via API
-      const response = await apiClient.put(`/api/v1/providers/${providerProfile?.providerId}`, updatedData);
+      const response = await apiClient.patch(`/api/v1/providers/${providerProfile?.providerId}`, updatedData);
 
       if (response) {
         // Update Redux store

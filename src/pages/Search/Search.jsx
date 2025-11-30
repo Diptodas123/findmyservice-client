@@ -5,8 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import FilterSidebar from '../../components/FilterSidebar/FilterSidebar.jsx';
 import ServiceCard from '../../components/ServiceCard/ServiceCard.jsx';
 import { useThemeMode } from '../../theme/useThemeMode';
-// import apiClient from '../../utils/apiClient';
-// import { API_BASE_URL } from '../../config/config';
+import apiClient from '../../utils/apiClient';
 import { MOCK_SEARCH_SERVICES } from '../../../mockData.js';
 import {
   setSearchQuery,
@@ -19,6 +18,7 @@ import {
   clearCategories,
   setServices,
   setLoading,
+  setError,
 } from '../../store/searchSlice';
 
 export default function Search() {
@@ -32,25 +32,21 @@ export default function Search() {
 
   // Fetch all services from backend
   useEffect(() => {
-    // COMMENTED OUT - Using mock data instead of API call
-    // const fetchServices = async () => {
-    //   try {
-    //     dispatch(setLoading(true));
-    //     dispatch(setError(null));
-    //     const data = await apiClient.get('/api/v1/services', { baseURL: API_BASE_URL });
-    //     dispatch(setServices(data || []));
-    //   } catch (err) {
-    //     console.error('Error fetching services:', err);
-    //     dispatch(setError('Failed to load services. Please try again later.'));
-    //   }
-    // };
-    // fetchServices();
-
-    // Using mock data for development
-    dispatch(setLoading(true));
-    setTimeout(() => {
-      dispatch(setServices(MOCK_SEARCH_SERVICES || []));
-    }, 500); // Simulate network delay
+    const fetchServices = async () => {
+      try {
+        dispatch(setLoading(true));
+        dispatch(setError(null));
+        const response = await apiClient.get('/api/v1/services');
+        const data = response.data || response;
+        dispatch(setServices(data || []));
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        dispatch(setError('Failed to load services. Please try again later.'));
+        // Fallback to mock data if API fails
+        dispatch(setServices(MOCK_SEARCH_SERVICES || []));
+      }
+    };
+    fetchServices();
   }, [dispatch]);
 
   // Sync URL params with Redux state on mount
@@ -82,7 +78,7 @@ export default function Search() {
         dispatch(toggleRating(rat));
       }
     }
-  }, []); // Only run on mount
+  }, [dispatch, searchParams]); // Run on mount and when params change
 
   // Update URL params when filters change
   useEffect(() => {
@@ -342,7 +338,7 @@ export default function Search() {
                       rating={service.avgRating}
                       location={service.location}
                       availability={service.availability}
-                      providerId={service.providerId?.providerId}
+                      providerId={service?.providerId}
                       fullService={service}
                     />
                   </Grid>

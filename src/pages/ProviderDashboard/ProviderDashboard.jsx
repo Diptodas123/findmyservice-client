@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Container, Toolbar, useTheme, useMediaQuery, ThemeProvider, CssBaseline, Avatar } from '@mui/material';
+import { Box, Container, Toolbar, useMediaQuery, ThemeProvider, CssBaseline, Avatar } from '@mui/material';
 import { useSelector } from 'react-redux';
 import ProviderHeader from './ProviderHeader';
 import ProviderSidebar from './ProviderSidebar';
@@ -31,18 +31,30 @@ const ProviderDashboard = () => {
     const reduxProvider = useSelector((state) => state.provider.profile);
     const isProfileComplete = useSelector((state) => state.provider.isProfileComplete);
 
-    // Use Redux provider if available, otherwise fallback to mock
-    const [provider, setProvider] = useState({ ...MOCK_PROVIDER });
+    // Derive provider from Redux if available, otherwise fallback to mock
+    const provider = useMemo(() => (reduxProvider && reduxProvider.providerId ? { ...MOCK_PROVIDER, ...reduxProvider } : { ...MOCK_PROVIDER }), [reduxProvider]);
 
     useEffect(() => {
-        if (reduxProvider && reduxProvider.providerId) {
-            setProvider({ ...MOCK_PROVIDER, ...reduxProvider });
-        }
-    }, [reduxProvider]);
+        try { localStorage.setItem('theme', mode); } catch (err) { console.warn('persist theme', err); }
+    }, [mode]);
 
-    // If profile is not complete, show setup form
+    // build theme object (hook order stable)
+    const themeObj = useMemo(() => buildTheme(mode), [mode]);
+
+    // media query derived from theme object (must be called unconditionally)
+    const mdUp = useMediaQuery(themeObj.breakpoints.up('md'));
+    const drawerWidth = 260;
+
+    // If profile is not complete, show setup form with theme
     if (!isProfileComplete) {
-        return <ProviderSetupForm />;
+        return (
+            <ThemeModeProvider value={{ mode, setMode }}>
+                <ThemeProvider theme={themeObj}>
+                    <CssBaseline />
+                    <ProviderSetupForm />
+                </ThemeProvider>
+            </ThemeModeProvider>
+        );
     }
 
     const renderView = () => {
@@ -50,7 +62,7 @@ const ProviderDashboard = () => {
             case 'home':
                 return <Analytics provider={provider} />;
             case 'details':
-                return <ProviderHomeView provider={provider} setProvider={setProvider} hideHero onCreateService={() => setView('services')} onViewBookings={() => setView('bookings')} />;
+                return <ProviderHomeView provider={provider} hideHero onCreateService={() => setView('services')} onViewBookings={() => setView('bookings')} />;
             case 'services':
                 return <ServicesList provider={provider} />;
             case 'bookings':
@@ -63,16 +75,6 @@ const ProviderDashboard = () => {
                 return <div>Welcome to the Provider Dashboard</div>;
         }
     };
-
-    const theme = useTheme();
-    const mdUp = useMediaQuery(theme.breakpoints.up('md'));
-    const drawerWidth = 260;
-
-    useEffect(() => {
-        try { localStorage.setItem('theme', mode); } catch (err) { console.warn('persist theme', err); }
-    }, [mode]);
-
-    const themeObj = useMemo(() => buildTheme(mode), [mode]);
 
     const handleToggle = () => {
         if (mdUp) {

@@ -17,12 +17,20 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { clearUser } from '../../store/userSlice';
+import { clearProvider } from '../../store/providerSlice';
 import { useTheme } from '@mui/material/styles';
 import { useThemeMode } from '../../theme/useThemeMode';
 
 
 const ProviderHeader = ({ onToggleSidebar }) => {
-  const profile = useSelector((s) => s.user?.profile || {});
+  const userProfile = useSelector((s) => s.user?.profile || {});
+  const providerProfile = useSelector((s) => s.provider?.profile || {});
+  
+  // Use provider profile picture if available, otherwise fall back to user profile
+  const profile = providerProfile?.profilePictureUrl 
+    ? providerProfile 
+    : userProfile;
+  
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleAvatarClick = (e) => setAnchorEl(e.currentTarget);
@@ -33,6 +41,7 @@ const ProviderHeader = ({ onToggleSidebar }) => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     dispatch(clearUser());
+    dispatch(clearProvider());
     handleClose();
     navigate('/login');
   };

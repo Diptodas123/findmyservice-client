@@ -227,14 +227,12 @@ const BookingsList = ({ provider }) => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Booking ID</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Customer</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Service</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Scheduled</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Payment</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -242,13 +240,17 @@ const BookingsList = ({ provider }) => {
                 <TableRow
                   key={booking.id}
                   hover
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                  onClick={() => handleViewDetails(booking)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleViewDetails(booking);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  sx={{ cursor: 'pointer', '&:last-child td, &:last-child th': { border: 0 } }}
                 >
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                      {booking.id}
-                    </Typography>
-                  </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
@@ -280,22 +282,6 @@ const BookingsList = ({ provider }) => {
                   </TableCell>
                   <TableCell>{getStatusChip(booking.status)}</TableCell>
                   <TableCell>{getPaymentChip(booking.paymentStatus)}</TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <Tooltip title="View Details">
-                        <IconButton size="small" onClick={() => handleViewDetails(booking)}>
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      {booking.status !== 'cancelled' && booking.status !== 'completed' && (
-                        <Tooltip title="More Actions">
-                          <IconButton size="small" onClick={(e) => handleOpenMenu(e, booking.id)}>
-                            <MoreVertIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Box>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

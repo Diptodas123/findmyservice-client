@@ -12,6 +12,11 @@ export const serviceAPI = {
     return await apiClient.get(`/api/v1/services/${serviceId}`, { baseURL: API_BASE_URL });
   },
 
+  // Get all services by provider ID
+  getAllServicesByProvider: async (providerId) => {
+    return await apiClient.get(`/api/v1/services/provider/${providerId}`, { baseURL: API_BASE_URL });
+  },
+
   // Create a new service (requires authentication)
   createService: async (serviceData) => {
     return await apiClient.post('/api/v1/services', serviceData, { baseURL: API_BASE_URL });
@@ -19,7 +24,7 @@ export const serviceAPI = {
 
   // Update service (requires authentication)
   updateService: async (serviceId, serviceData) => {
-    return await apiClient.put(`/api/v1/services/${serviceId}`, serviceData, { baseURL: API_BASE_URL });
+    return await apiClient.patch(`/api/v1/services/${serviceId}`, serviceData, { baseURL: API_BASE_URL });
   },
 
   // Delete service (requires authentication)

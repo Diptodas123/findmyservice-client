@@ -67,7 +67,7 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
         setPendingService(null);
     };
 
-    const handleCloseDialog = () => {
+    const handleCloseDialog = (e) => {
         setOpenDialog(false);
         setPendingService(null);
     };
@@ -150,7 +150,10 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                                     <IconButton
                                         color="error"
                                         size="small"
-                                        onClick={() => handleRemoveFromCart(svc.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveFromCart(svc.id);
+                                        }}
                                         sx={{
                                             border: '1px solid',
                                             borderColor: 'error.main',
@@ -169,7 +172,10 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                                     color="primary"
                                     size="small"
                                     startIcon={<ShoppingCartIcon />}
-                                    onClick={() => handleAddToCart(svc)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddToCart(svc);
+                                    }}
                                     sx={{ minWidth: 120, flexShrink: 0, ml: 2 }}
                                 >
                                     Add to Cart
@@ -251,13 +257,19 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                 </DialogContent>
                 <DialogActions sx={{ p: 2, gap: 1 }}>
                     <Button
-                        onClick={handleCloseDialog}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleCloseDialog();
+                        }}
                         variant="outlined"
                     >
                         Cancel
                     </Button>
                     <Button
-                        onClick={handleEmptyCartAndAdd}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleEmptyCartAndAdd();
+                        }}
                         variant="contained"
                         color="error"
                         startIcon={<ShoppingCartIcon />}
