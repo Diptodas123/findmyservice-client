@@ -1,4 +1,4 @@
-import { Box, Paper, Stack, Typography, Button, Rating, Chip, FormControl, InputLabel, Select, MenuItem, Divider, Avatar, CircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Stack, Typography, Button, Rating, Chip, FormControl, InputLabel, Select, MenuItem, Divider, Avatar, CircularProgress, Alert, TextField } from '@mui/material';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
@@ -10,7 +10,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addItem as addItemAction } from '../../store/cartSlice';
 import toastMessage from '../../utils/toastMessage';
 import formatINR from '../../utils/formatCurrency';
-import apiClient from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
 
 const ServiceDetails = () => {
@@ -30,8 +29,18 @@ const ServiceDetails = () => {
                 setError(null);
                 
                 // Fetch service details
-                const serviceResponse = await apiClient.get(`/api/v1/services/${id}`);
-                const serviceData = serviceResponse.data || serviceResponse;
+                const serviceResponse = await fetch(`http://localhost:8080/api/v1/services/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (!serviceResponse.ok) {
+                    throw new Error(`HTTP error! status: ${serviceResponse.status}`);
+                }
+                
+                const serviceData = await serviceResponse.json();
                 
                 if (!serviceData) {
                     throw new Error('Service not found');
@@ -42,9 +51,19 @@ const ServiceDetails = () => {
                 // Fetch provider details if providerId exists
                 if (serviceData.providerId) {
                     try {
-                        const providerResponse = await apiClient.get(`/api/v1/providers/${serviceData.providerId}`);
-                        const providerData = providerResponse.data || providerResponse;
-                        setProvider(providerData);
+                        const providerResponse = await fetch(`http://localhost:8080/api/v1/providers/${serviceData.providerId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                'Content-Type': 'application/json',
+                            },
+                        });
+                        
+                        if (providerResponse.ok) {
+                            const providerData = await providerResponse.json();
+                            setProvider(providerData);
+                        } else {
+                            throw new Error(`Provider fetch failed: ${providerResponse.status}`);
+                        }
                     } catch (providerErr) {
                         console.error('Error fetching provider:', providerErr);
                         // Set basic provider info from service data
@@ -60,9 +79,62 @@ const ServiceDetails = () => {
                 
                 // Fetch reviews for the service
                 try {
-                    const reviewsResponse = await apiClient.get(`/api/v1/services/${id}/reviews`);
-                    const reviewsData = reviewsResponse.data || reviewsResponse;
-                    setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+                    const reviewsResponse = await fetch(`http://localhost:8080/api/v1/feedbacks/service/${id}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    
+                    if (reviewsResponse.ok) {
+                        const reviewsData = await reviewsResponse.json();
+                        
+                        // Enrich reviews with user details
+                        const enrichedReviews = await Promise.all(
+                            (Array.isArray(reviewsData) ? reviewsData : []).map(async (review) => {
+                                try {
+                                    // Fetch user details
+                                    let userDetails = null;
+                                    if (review.userId) {
+                                        const userResponse = await fetch(`http://localhost:8080/api/v1/users/${review.userId}`, {
+                                            headers: {
+                                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                                'Content-Type': 'application/json',
+                                            },
+                                        });
+                                        if (userResponse.ok) {
+                                            userDetails = await userResponse.json();
+                                        }
+                                    }
+                                    
+                                    // Transform review data with user details
+                                    return {
+                                        ...review,
+                                        user: userDetails?.name || 'Anonymous User',
+                                        image: userDetails?.profilePictureUrl || null,
+                                        createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                        comment: review.comment || review.feedback || '',
+                                        rating: review.rating || 0
+                                    };
+                                } catch (error) {
+                                    console.warn('Failed to enrich review:', error);
+                                    return {
+                                        ...review,
+                                        user: 'Anonymous User',
+                                        image: null,
+                                        createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                        comment: review.comment || review.feedback || '',
+                                        rating: review.rating || 0
+                                    };
+                                }
+                            })
+                        );
+                        
+                        setReviews(enrichedReviews);
+                    } else {
+                        console.log('No reviews found or error fetching reviews');
+                        setReviews([]);
+                    }
                 } catch (reviewErr) {
                     console.error('Error fetching reviews:', reviewErr);
                     setReviews([]);
@@ -93,6 +165,11 @@ const ServiceDetails = () => {
     };
     const [reviewSort, setReviewSort] = React.useState('newest');
     const [expandedReviewIds, setExpandedReviewIds] = React.useState([]);
+    
+    // Review form state
+    const [reviewRating, setReviewRating] = React.useState(0);
+    const [reviewComment, setReviewComment] = React.useState('');
+    const [submittingReview, setSubmittingReview] = React.useState(false);
 
     const sortedReviews = React.useMemo(() => {
         const arr = [...reviews];
@@ -112,6 +189,7 @@ const ServiceDetails = () => {
 
     const dispatch = useDispatch();
     const items = useSelector((s) => s.cart.items || []);
+    const user = useSelector((s) => s.user?.profile || null);
 
     const handleAddToCart = () => {
         if (!service) return;
@@ -130,12 +208,73 @@ const ServiceDetails = () => {
             location: service.location || (provider ? `${provider.city || ''}${provider.state ? ', ' + provider.state : ''}` : ''),
             availability: service.availability,
             imageUrl: service.imageUrl,
-            providerId: service.providerId,
-            providerName: provider?.providerName,
+            providerId: service.providerId?.providerId || service.providerId || provider?.providerId || provider?.id,
+            providerName: provider?.providerName || provider?.name,
         };
 
+        console.log('ServiceDetails - Adding to cart:', payload);
         dispatch(addItemAction(payload));
         toastMessage({ msg: `${service.serviceName || service.name} added to cart`, type: 'success' });
+    };
+
+    const handleSubmitReview = async () => {
+        if (!user || !user.userId) {
+            toastMessage({ msg: 'Please log in to submit a review', type: 'error' });
+            return;
+        }
+
+        if (!reviewRating) {
+            toastMessage({ msg: 'Please select a rating', type: 'warning' });
+            return;
+        }
+
+        if (!reviewComment.trim()) {
+            toastMessage({ msg: 'Please enter a review comment', type: 'warning' });
+            return;
+        }
+
+        setSubmittingReview(true);
+        try {
+            const reviewPayload = {
+                userId: user.userId,
+                serviceId: service.serviceId,
+                providerId: service.providerId,
+                rating: reviewRating,
+                comment: reviewComment.trim(),
+                date: new Date().toISOString()
+            };
+
+            const response = await fetch('http://localhost:8080/api/v1/feedbacks', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reviewPayload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            // Reset form
+            setReviewRating(0);
+            setReviewComment('');
+            
+            toastMessage({ msg: 'Review submitted successfully!', type: 'success' });
+            
+            // Refresh reviews
+            window.location.reload(); // Simple refresh - you could also re-fetch reviews
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            toastMessage({ 
+                msg: error.message || 'Failed to submit review. Please try again.', 
+                type: 'error' 
+            });
+        } finally {
+            setSubmittingReview(false);
+        }
     };
 
     if (loading) {
@@ -201,9 +340,57 @@ const ServiceDetails = () => {
             </Paper>
             <Box sx={{ display: 'flex', gap: 3, mt: 3, flexDirection: { xs: 'column', md: 'row' } }}>
                 <Box sx={{ flex: 1 }}>
+                    {/* Add Review Form */}
+                    <Paper sx={{ p: 3, mb: 3 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Write a Review</Typography>
+                        <Stack spacing={2}>
+                            <Box>
+                                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Rating *</Typography>
+                                <Rating
+                                    value={reviewRating}
+                                    onChange={(event, newValue) => setReviewRating(newValue)}
+                                    size="large"
+                                    precision={1}
+                                />
+                            </Box>
+                            <Box>
+                                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Comment *</Typography>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={4}
+                                    placeholder="Share your experience with this service..."
+                                    value={reviewComment}
+                                    onChange={(e) => setReviewComment(e.target.value)}
+                                    variant="outlined"
+                                    disabled={submittingReview}
+                                />
+                            </Box>
+                            <Box>
+                                <Button
+                                    variant="contained"
+                                    onClick={handleSubmitReview}
+                                    disabled={submittingReview || !reviewRating || !reviewComment.trim()}
+                                    sx={{ px: 3, py: 1 }}
+                                >
+                                    {submittingReview ? (
+                                        <>
+                                            <CircularProgress size={16} sx={{ mr: 1 }} />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        'Submit Review'
+                                    )}
+                                </Button>
+                            </Box>
+                        </Stack>
+                    </Paper>
+
+                    {/* Reviews List */}
+                    {/* Reviews List */}
                     <Paper sx={{ p: 2 }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>Reviews</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>Customer Reviews ({reviews.length})</Typography>
                             <FormControl size="small" sx={{ minWidth: 140 }}>
                                 <InputLabel id="sd-review-sort">Sort</InputLabel>
                                 <Select labelId="sd-review-sort" label="Sort" value={reviewSort} onChange={(e) => setReviewSort(e.target.value)}>

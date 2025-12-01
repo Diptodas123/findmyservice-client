@@ -12,6 +12,7 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    CircularProgress,
 } from '@mui/material';
 import {
     Delete as DeleteIcon,
@@ -29,6 +30,20 @@ const Cart = () => {
 
     const items = useSelector((s) => s.cart.items || []);
     const dispatch = useDispatch();
+    
+    // Debug: Check what's in the cart
+    React.useEffect(() => {
+        console.log('Cart Redux items:', items);
+        items.forEach((item, index) => {
+            console.log(`Cart item ${index}:`, {
+                serviceId: item.serviceId,
+                serviceName: item.serviceName,
+                providerId: item.providerId,
+                fullItem: item
+            });
+        });
+    }, [items]);
+    
     const subtotal = items.reduce((sum, it) => sum + (Number(it.cost) || 0), 0);
     const TAX_RATE = 0.18; // 18% GST
     const SERVICE_FEE = 50; // flat service fee
@@ -39,14 +54,70 @@ const Cart = () => {
     const user = useSelector((s) => s.user?.profile || { name: '', email: '', phone: '' });
     const [checkoutOpen, setCheckoutOpen] = React.useState(false);
     const [clearCartOpen, setClearCartOpen] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!user.name || !user.phone) {
             return toastMessage({ msg: 'Please set your name and phone in your profile before proceeding', type: 'warning' });
         }
-        setCheckoutOpen(false);
-        dispatch(clearCart());
-        toastMessage({ msg: 'Checkout successful — booking created', type: 'success' });
+        
+        if (!user.userId) {
+            return toastMessage({ msg: 'Please log in to proceed with checkout', type: 'error' });
+        }
+
+        // Check if all items have provider ID
+        const itemsWithoutProvider = items.filter(item => !item.providerId);
+        if (itemsWithoutProvider.length > 0) {
+            console.log('Items missing provider ID:', itemsWithoutProvider);
+            return toastMessage({ 
+                msg: `Some services are missing provider information. Please remove and re-add these services to your cart.`, 
+                type: 'error' 
+            });
+        }
+
+        setLoading(true);
+        try {
+            // Transform cart items to the specified payload format
+            const orderPayload = items.map(item => ({
+                userId: user.userId,
+                providerId: item.providerId,
+                serviceId: item.serviceId,
+                requestedDate: new Date().toISOString(),
+            }));
+
+            console.log('Checkout payload:', orderPayload);
+
+            const response = await fetch('http://localhost:8080/api/v1/orders/checkout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderPayload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            setCheckoutOpen(false);
+            dispatch(clearCart());
+            toastMessage({ 
+                msg: `Checkout successful! ${result.length} order(s) created successfully.`, 
+                type: 'success' 
+            });
+        } catch (error) {
+            console.error('Checkout error:', error);
+            toastMessage({ 
+                msg: error.message || 'Checkout failed. Please try again.', 
+                type: 'error' 
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -161,7 +232,7 @@ const Cart = () => {
                                             <IconButton
                                                 size="medium"
                                                 onClick={() => {
-                                                    dispatch(removeItem({ providerId: it.providerId, serviceName: it.serviceName }));
+                                                    dispatch(removeItem(it.serviceId));
                                                     toastMessage({ msg: 'Service removed from cart', type: 'info' });
                                                 }}
                                                 aria-label="remove"
@@ -230,8 +301,9 @@ const Cart = () => {
                                 <Button
                                     variant="contained"
                                     size="large"
-                                    startIcon={<ShoppingBagIcon />}
+                                    startIcon={loading ? <CircularProgress size={20} /> : <ShoppingBagIcon />}
                                     onClick={() => setCheckoutOpen(true)}
+                                    disabled={loading}
                                     sx={{
                                         py: 1.5,
                                         fontWeight: 700,
@@ -244,7 +316,7 @@ const Cart = () => {
                                         transition: 'all 0.2s'
                                     }}
                                 >
-                                    Proceed to Checkout
+                                    {loading ? 'Processing...' : 'Proceed to Checkout'}
                                 </Button>
                                 <Button
                                     variant="outlined"
@@ -344,8 +416,15 @@ const Cart = () => {
                             </Stack>
                         </DialogContent>
                         <DialogActions>
-                            <Button onClick={() => setCheckoutOpen(false)}>Cancel</Button>
-                            <Button variant="contained" onClick={handleConfirm}>Confirm Booking</Button>
+                            <Button onClick={() => setCheckoutOpen(false)} disabled={loading}>Cancel</Button>
+                            <Button 
+                                variant="contained" 
+                                onClick={handleConfirm}
+                                disabled={loading}
+                                startIcon={loading ? <CircularProgress size={16} /> : null}
+                            >
+                                {loading ? 'Processing...' : 'Confirm Booking'}
+                            </Button>
                         </DialogActions>
                     </Dialog>
 

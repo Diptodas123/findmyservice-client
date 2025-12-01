@@ -1,80 +1,47 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Paper, Stack, Typography, Skeleton, Pagination, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
-import { LocalOffer as LocalOfferIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, ShoppingCart as ShoppingCartIcon, CheckCircle as CheckCircleIcon, Delete as DeleteIcon, Warning as WarningIcon } from '@mui/icons-material';
+import { Box, Paper, Stack, Typography, Skeleton, Pagination, IconButton, Button } from '@mui/material';
+import { LocalOffer as LocalOfferIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, ShoppingCart as ShoppingCartIcon, CheckCircle as CheckCircleIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { addItem, removeItem, clearCart } from '../../store/cartSlice';
 import toastMessage from '../../utils/toastMessage';
 import { useNavigate } from 'react-router-dom';
+import { useThemeMode } from '../../theme/useThemeMode';
 
 const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageSize = 4, provider }) => {
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.cart.items);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [pendingService, setPendingService] = useState(null);
+    const { mode } = useThemeMode();
     const pageSize = initialPageSize;
 
+    const isInCart = (serviceId) => cartItems.some(item => item.serviceId === serviceId);
+
     const handleAddToCart = (service) => {
-        // Check if already in cart
-        const isInCart = cartItems.some(item => item.serviceId === service.serviceId);
-        if (isInCart) {
-            toastMessage('info', 'This service is already in your cart');
+        if (isInCart(service.serviceId)) {
+            toastMessage('info', `${service.serviceName} is already in cart`);
             return;
         }
 
-        // Check if cart has items from different provider
-        if (cartItems.length > 0) {
-            const currentProviderId = cartItems[0].providerId;
-            if (currentProviderId !== provider?.providerId) {
-                // Show dialog instead of toast
-                setPendingService(service);
-                setOpenDialog(true);
-                return;
-            }
-        }
-
-        dispatch(addItem({
+        const cartItem = {
             serviceId: service.serviceId,
             serviceName: service.serviceName,
             description: service.description,
             imageUrl: service.imageUrl,
-            providerId: provider?.providerId,
-            providerName: provider?.providerName,
+            providerId: provider?.providerId || provider?.id,
+            providerName: provider?.providerName || provider?.name,
             location: service.location || provider?.city,
             cost: service.cost || 0,
-        }));
+        };
+        
+        console.log('ServicesList - Adding to cart:', cartItem);
+        dispatch(addItem(cartItem));
         toastMessage('success', `${service.serviceName} added to cart!`);
     };
 
-    const handleEmptyCartAndAdd = () => {
-        // Clear cart and add new service
-        dispatch(clearCart());
-        if (pendingService && provider) {
-            dispatch(addItem({
-                serviceId: pendingService.serviceId,
-                serviceName: pendingService.serviceName,
-                description: pendingService.description,
-                imageUrl: pendingService.imageUrl,
-                providerId: provider.providerId,
-                providerName: provider.providerName,
-                location: pendingService.location || provider.city,
-                cost: pendingService.cost || 0,
-            }));
-            toastMessage('success', `Cart cleared. ${pendingService.serviceName} added to cart!`);
-        }
-        setOpenDialog(false);
-        setPendingService(null);
-    };
-
-    const handleCloseDialog = (e) => {
-        setOpenDialog(false);
-        setPendingService(null);
-    };
-
     const handleRemoveFromCart = (serviceId) => {
-        dispatch(removeItem((item) => item.serviceId === serviceId));
-        toastMessage('success', 'Service removed from cart');
+        dispatch(removeItem(serviceId));
+        toastMessage('success', 'Service removed from cart!');
     };
 
     if (loading) {
@@ -231,53 +198,6 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
                     </IconButton>
                 </Box>
             )}
-
-            {/* Provider Conflict Dialog */}
-            <Dialog
-                open={openDialog}
-                onClose={handleCloseDialog}
-                maxWidth="sm"
-                fullWidth
-            >
-                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WarningIcon color="warning" />
-                    Different Service Provider
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        You can only order services from one provider at a time.
-                    </DialogContentText>
-                    <DialogContentText sx={{ mt: 2, fontWeight: 600 }}>
-                        Current cart: {cartItems.length > 0 && cartItems[0].providerName}
-                    </DialogContentText>
-                    <DialogContentText sx={{ mt: 1 }}>
-                        To add this service from <strong>{provider?.providerName}</strong>,
-                        you need to empty your current cart first.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ p: 2, gap: 1 }}>
-                    <Button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleCloseDialog();
-                        }}
-                        variant="outlined"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleEmptyCartAndAdd();
-                        }}
-                        variant="contained"
-                        color="error"
-                        startIcon={<ShoppingCartIcon />}
-                    >
-                        Empty Cart & Add
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Stack>
     );
 };

@@ -26,7 +26,6 @@ import {
 } from '@mui/icons-material';
 
 import toastMessage from '../../utils/toastMessage';
-import apiClient from '../../utils/apiClient';
 
 import HeaderBlock from './HeaderBlock';
 import PhotosGrid from './PhotosGrid';
@@ -58,8 +57,18 @@ const ServiceProviderDetails = () => {
             setLoading(true);
             try {
                 // Fetch provider details from API
-                const response = await apiClient.get(`/api/v1/providers/${providerId}`);
-                const providerData = response.data || response;
+                const response = await fetch(`http://localhost:8080/api/v1/providers/${providerId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const providerData = await response.json();
                 
                 console.log('Provider data:', providerData);
                 if (!providerData) {
@@ -71,9 +80,20 @@ const ServiceProviderDetails = () => {
                 
                 // Fetch services for this provider
                 try {
-                    const servicesResponse = await apiClient.get(`/api/v1/services/provider/${providerId}`);
-                    const servicesData = servicesResponse.data || servicesResponse;
-                    setServices(Array.isArray(servicesData) ? servicesData : []);
+                    const servicesResponse = await fetch(`http://localhost:8080/api/v1/services/provider/${providerId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    
+                    if (servicesResponse.ok) {
+                        const servicesData = await servicesResponse.json();
+                        setServices(Array.isArray(servicesData) ? servicesData : []);
+                    } else {
+                        console.log('No services found for provider');
+                        setServices([]);
+                    }
                 } catch (serviceError) {
                     console.error('Error fetching services:', serviceError);
                     setServices([]);
@@ -81,9 +101,62 @@ const ServiceProviderDetails = () => {
                 
                 // Fetch reviews for this provider
                 try {
-                    const reviewsResponse = await apiClient.get(`/api/v1/providers/${providerId}/reviews`);
-                    const reviewsData = reviewsResponse.data || reviewsResponse;
-                    setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+                    const reviewsResponse = await fetch(`http://localhost:8080/api/v1/feedbacks/provider/${providerId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    
+                    if (reviewsResponse.ok) {
+                        const reviewsData = await reviewsResponse.json();
+                        
+                        // Enrich reviews with user details
+                        const enrichedReviews = await Promise.all(
+                            (Array.isArray(reviewsData) ? reviewsData : []).map(async (review) => {
+                                try {
+                                    // Fetch user details
+                                    let userDetails = null;
+                                    if (review.userId) {
+                                        const userResponse = await fetch(`http://localhost:8080/api/v1/users/${review.userId}`, {
+                                            headers: {
+                                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                                'Content-Type': 'application/json',
+                                            },
+                                        });
+                                        if (userResponse.ok) {
+                                            userDetails = await userResponse.json();
+                                        }
+                                    }
+                                    
+                                    // Transform review data with user details
+                                    return {
+                                        ...review,
+                                        user: userDetails?.name || 'Anonymous User',
+                                        image: userDetails?.profilePictureUrl || null,
+                                        createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                        comment: review.comment || review.feedback || '',
+                                        rating: review.rating || 0
+                                    };
+                                } catch (error) {
+                                    console.warn('Failed to enrich review:', error);
+                                    return {
+                                        ...review,
+                                        user: 'Anonymous User',
+                                        image: null,
+                                        createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                        comment: review.comment || review.feedback || '',
+                                        rating: review.rating || 0
+                                    };
+                                }
+                            })
+                        );
+                        
+                        setReviews(enrichedReviews);
+                    } else {
+                        console.log('No reviews found for provider');
+                        setReviews([]);
+                    }
                 } catch (reviewError) {
                     console.error('Error fetching reviews:', reviewError);
                     setReviews([]);

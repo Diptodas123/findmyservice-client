@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Paper,
   Typography,
@@ -28,6 +28,8 @@ import {
   Tooltip,
   Menu,
   MenuItem,
+  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -42,30 +44,196 @@ import {
   CalendarToday as CalendarTodayIcon,
   AccessTime as AccessTimeIcon,
   AttachMoney as AttachMoneyIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { MOCK_BOOKINGS } from '../../../mockData';
+import apiClient from '../../utils/apiClient';
+import toastMessage from '../../utils/toastMessage';
 
 const STATUS_CONFIG = {
-  pending: { label: 'Pending', color: 'warning', bgColor: '#fff3e0', textColor: '#e65100' },
-  confirmed: { label: 'Confirmed', color: 'info', bgColor: '#e3f2fd', textColor: '#1565c0' },
-  completed: { label: 'Completed', color: 'success', bgColor: '#e8f5e9', textColor: '#2e7d32' },
-  cancelled: { label: 'Cancelled', color: 'error', bgColor: '#ffebee', textColor: '#c62828' },
+  REQUESTED: { label: 'Pending', color: 'warning', bgColor: '#fff3e0', textColor: '#e65100' },
+  PAID: { label: 'Paid', color: 'info', bgColor: '#e3f2fd', textColor: '#1565c0' },
+  SCHEDULED: { label: 'Scheduled', color: 'info', bgColor: '#e3f2fd', textColor: '#1565c0' },
+  COMPLETED: { label: 'Completed', color: 'success', bgColor: '#e8f5e9', textColor: '#2e7d32' },
+  CANCELLED: { label: 'Cancelled', color: 'error', bgColor: '#ffebee', textColor: '#c62828' },
 };
 
 const PAYMENT_STATUS_CONFIG = {
-  pending: { label: 'Pending', color: 'warning' },
-  paid: { label: 'Paid', color: 'success' },
-  refunded: { label: 'Refunded', color: 'default' },
+  REQUESTED: { label: 'Pending', color: 'warning' },
+  PAID: { label: 'Paid', color: 'success' },
+  SCHEDULED: { label: 'Paid', color: 'success' },
+  COMPLETED: { label: 'Paid', color: 'success' },
+  CANCELLED: { label: 'Refunded', color: 'default' },
 };
 
 const BookingsList = ({ provider }) => {
-  const [bookings, setBookings] = useState(MOCK_BOOKINGS);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuBookingId, setMenuBookingId] = useState(null);
+
+  // Fetch bookings when component mounts or provider changes
+  useEffect(() => {
+    if (provider?.providerId) {
+      fetchBookings();
+    }
+  }, [provider?.providerId]);
+
+  const fetchBookings = async () => {
+    if (!provider?.providerId) {
+      toastMessage({ msg: 'Provider information not available', type: 'error' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/orders/provider/${provider.providerId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const orders = await response.json();
+      
+      // Fetch additional details for each order
+      const enrichedBookings = await Promise.all(
+        orders.map(async (order) => {
+          try {
+            // Fetch user details
+            let userDetails = null;
+            if (order.userId) {
+              try {
+                const userResponse = await fetch(`http://localhost:8080/api/v1/users/${order.userId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
+                if (userResponse.ok) {
+                  userDetails = await userResponse.json();
+                }
+              } catch (error) {
+                console.warn('Failed to fetch user details:', error);
+              }
+            }
+
+            // Fetch service details
+            let serviceDetails = null;
+            if (order.serviceId) {
+              try {
+                const serviceResponse = await fetch(`http://localhost:8080/api/v1/services/${order.serviceId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
+                if (serviceResponse.ok) {
+                  serviceDetails = await serviceResponse.json();
+                }
+              } catch (error) {
+                console.warn('Failed to fetch service details:', error);
+              }
+            }
+
+            // Transform order data with enriched details
+            return {
+              id: order.orderId?.toString() || order.id?.toString(),
+              orderId: order.orderId || order.id,
+              customerName: userDetails?.name || 'Unknown Customer',
+              customerEmail: userDetails?.email || 'unknown@email.com',
+              customerPhone: userDetails?.phone || 'N/A',
+              serviceName: serviceDetails?.serviceName || 'Unknown Service',
+              serviceId: order.serviceId,
+              serviceCategory: serviceDetails?.category || 'General',
+              serviceDescription: serviceDetails?.description || '',
+              status: order.orderStatus || 'REQUESTED',
+              paymentStatus: order.orderStatus || 'REQUESTED',
+              amount: order.totalCost || 0,
+              quantity: order.quantity || 1,
+              scheduledDate: order.scheduledDate || order.requestedDate || new Date().toISOString(),
+              scheduledTime: order.scheduledDate ? new Date(order.scheduledDate).toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+              }) : 'TBD',
+              createdAt: order.createdAt || new Date().toISOString(),
+              completedAt: order.orderStatus === 'COMPLETED' ? order.updatedAt : null,
+              cancelledAt: order.orderStatus === 'CANCELLED' ? order.updatedAt : null,
+              transactionId: order.transactionId,
+              paymentDate: order.paymentDate,
+              address: userDetails ? 
+                `${userDetails.addressLine1 || ''}${userDetails.addressLine2 ? '\n' + userDetails.addressLine2 : ''}${userDetails.city ? '\n' + userDetails.city : ''}${userDetails.state ? ', ' + userDetails.state : ''}${userDetails.zipCode ? ' - ' + userDetails.zipCode : ''}`.replace(/^\n/, '').trim() 
+                : 'Address not provided',
+              notes: order.notes || '',
+              // Store original references for potential future use
+              originalUser: userDetails,
+              originalService: serviceDetails,
+              originalOrder: order,
+            };
+          } catch (error) {
+            console.error('Error enriching order data:', error);
+            // Return basic order data if enrichment fails
+            return {
+              id: order.orderId?.toString() || order.id?.toString(),
+              orderId: order.orderId || order.id,
+              customerName: 'Unknown Customer',
+              customerEmail: 'unknown@email.com',
+              customerPhone: 'N/A',
+              serviceName: 'Unknown Service',
+              serviceId: order.serviceId,
+              status: order.orderStatus || 'REQUESTED',
+              paymentStatus: order.orderStatus || 'REQUESTED',
+              amount: order.totalCost || 0,
+              quantity: order.quantity || 1,
+              scheduledDate: order.scheduledDate || order.requestedDate || new Date().toISOString(),
+              scheduledTime: 'TBD',
+              createdAt: order.createdAt || new Date().toISOString(),
+              completedAt: null,
+              cancelledAt: null,
+              transactionId: order.transactionId,
+              paymentDate: order.paymentDate,
+              address: 'Address not provided',
+              notes: order.notes || '',
+              originalOrder: order,
+            };
+          }
+        })
+      );
+
+      setBookings(enrichedBookings);
+      
+      // Show success message with details about data completeness
+      const failedUserFetches = enrichedBookings.filter(b => !b.originalUser).length;
+      const failedServiceFetches = enrichedBookings.filter(b => !b.originalService).length;
+      
+      if (failedUserFetches === 0 && failedServiceFetches === 0) {
+        toastMessage({ msg: 'Bookings loaded successfully with complete details', type: 'success' });
+      } else {
+        let message = 'Bookings loaded';
+        if (failedUserFetches > 0) message += ` (${failedUserFetches} customer details unavailable)`;
+        if (failedServiceFetches > 0) message += ` (${failedServiceFetches} service details unavailable)`;
+        toastMessage({ msg: message, type: 'warning' });
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      toastMessage({ msg: 'Failed to load bookings. Please try again.', type: 'error' });
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
@@ -77,34 +245,60 @@ const BookingsList = ({ provider }) => {
     setSelectedBooking(null);
   };
 
+  const updateBookingStatus = async (bookingId, newStatus) => {
+    setUpdating(true);
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/orders/${bookingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderStatus: newStatus
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedOrder = await response.json();
+      
+      // Update the local bookings state
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.orderId === bookingId ? { 
+            ...b, 
+            status: newStatus, 
+            paymentStatus: newStatus,
+            completedAt: newStatus === 'COMPLETED' ? new Date().toISOString() : b.completedAt,
+            cancelledAt: newStatus === 'CANCELLED' ? new Date().toISOString() : b.cancelledAt
+          } : b
+        )
+      );
+      
+      toastMessage({ msg: `Booking ${newStatus.toLowerCase()} successfully`, type: 'success' });
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toastMessage({ msg: 'Failed to update booking status. Please try again.', type: 'error' });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleConfirm = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === bookingId ? { ...b, status: 'confirmed' } : b
-      )
-    );
+    updateBookingStatus(bookingId, 'SCHEDULED');
     handleCloseMenu();
   };
 
   const handleComplete = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === bookingId
-          ? { ...b, status: 'completed', completedAt: new Date().toISOString(), paymentStatus: 'paid' }
-          : b
-      )
-    );
+    updateBookingStatus(bookingId, 'COMPLETED');
     handleCloseMenu();
   };
 
   const handleCancel = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === bookingId
-          ? { ...b, status: 'cancelled', cancelledAt: new Date().toISOString() }
-          : b
-      )
-    );
+    updateBookingStatus(bookingId, 'CANCELLED');
     handleCloseMenu();
   };
 
@@ -121,9 +315,9 @@ const BookingsList = ({ provider }) => {
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => {
       const matchesSearch =
-        booking.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.id.toLowerCase().includes(searchQuery.toLowerCase());
+        (booking.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (booking.serviceName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (booking.id || '').toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
       
@@ -134,10 +328,11 @@ const BookingsList = ({ provider }) => {
   const statusCounts = useMemo(() => {
     return {
       all: bookings.length,
-      pending: bookings.filter((b) => b.status === 'pending').length,
-      confirmed: bookings.filter((b) => b.status === 'confirmed').length,
-      completed: bookings.filter((b) => b.status === 'completed').length,
-      cancelled: bookings.filter((b) => b.status === 'cancelled').length,
+      REQUESTED: bookings.filter((b) => b.status === 'REQUESTED').length,
+      PAID: bookings.filter((b) => b.status === 'PAID').length,
+      SCHEDULED: bookings.filter((b) => b.status === 'SCHEDULED').length,
+      COMPLETED: bookings.filter((b) => b.status === 'COMPLETED').length,
+      CANCELLED: bookings.filter((b) => b.status === 'CANCELLED').length,
     };
   }, [bookings]);
 
@@ -159,7 +354,7 @@ const BookingsList = ({ provider }) => {
   };
 
   const getStatusChip = (status) => {
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+    const config = STATUS_CONFIG[status] || STATUS_CONFIG.REQUESTED;
     return (
       <Chip
         label={config.label}
@@ -175,7 +370,7 @@ const BookingsList = ({ provider }) => {
   };
 
   const getPaymentChip = (paymentStatus) => {
-    const config = PAYMENT_STATUS_CONFIG[paymentStatus] || PAYMENT_STATUS_CONFIG.pending;
+    const config = PAYMENT_STATUS_CONFIG[paymentStatus] || PAYMENT_STATUS_CONFIG.REQUESTED;
     return (
       <Chip
         label={config.label}
@@ -192,20 +387,31 @@ const BookingsList = ({ provider }) => {
         <Typography variant="h5" sx={{ fontWeight: 600 }}>
           Bookings Management
         </Typography>
-        <TextField
-          size="small"
-          placeholder="Search bookings..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ width: { xs: '100%', sm: 300 } }}
-        />
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Search bookings..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: { xs: '100%', sm: 300 } }}
+          />
+          <Button
+            variant="outlined"
+            startIcon={loading ? <CircularProgress size={16} /> : <RefreshIcon />}
+            onClick={fetchBookings}
+            disabled={loading}
+            size="small"
+          >
+            Refresh
+          </Button>
+        </Box>
       </Box>
 
       <Tabs
@@ -214,14 +420,35 @@ const BookingsList = ({ provider }) => {
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
       >
         <Tab label={`All (${statusCounts.all})`} value="all" />
-        <Tab label={`Pending (${statusCounts.pending})`} value="pending" />
-        <Tab label={`Confirmed (${statusCounts.confirmed})`} value="confirmed" />
-        <Tab label={`Completed (${statusCounts.completed})`} value="completed" />
-        <Tab label={`Cancelled (${statusCounts.cancelled})`} value="cancelled" />
+        <Tab label={`Pending (${statusCounts.REQUESTED})`} value="REQUESTED" />
+        <Tab label={`Paid (${statusCounts.PAID})`} value="PAID" />
+        <Tab label={`Scheduled (${statusCounts.SCHEDULED})`} value="SCHEDULED" />
+        <Tab label={`Completed (${statusCounts.COMPLETED})`} value="COMPLETED" />
+        <Tab label={`Cancelled (${statusCounts.CANCELLED})`} value="CANCELLED" />
       </Tabs>
 
-      {filteredBookings.length === 0 ? (
-        <Alert severity="info">No bookings found matching your criteria.</Alert>
+      {loading ? (
+        <Box sx={{ p: 2 }}>
+          <Typography variant="body2" sx={{ mb: 2 }}>Loading bookings and enriching with customer and service details...</Typography>
+          {[...Array(5)].map((_, index) => (
+            <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <Skeleton variant="circular" width={40} height={40} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" />
+                <Skeleton variant="text" width="40%" />
+              </Box>
+              <Skeleton variant="rectangular" width={100} height={20} />
+              <Skeleton variant="rectangular" width={80} height={20} />
+            </Box>
+          ))}
+        </Box>
+      ) : filteredBookings.length === 0 ? (
+        <Alert severity="info">
+          {bookings.length === 0 
+            ? "No bookings found. Bookings will appear here once customers make orders." 
+            : "No bookings found matching your criteria."
+          }
+        </Alert>
       ) : (
         <TableContainer>
           <Table>
@@ -233,6 +460,7 @@ const BookingsList = ({ provider }) => {
                 <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Payment</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -240,48 +468,63 @@ const BookingsList = ({ provider }) => {
                 <TableRow
                   key={booking.id}
                   hover
-                  onClick={() => handleViewDetails(booking)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleViewDetails(booking);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  sx={{ cursor: 'pointer', '&:last-child td, &:last-child th': { border: 0 } }}
+                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
-                  <TableCell>
+                  <TableCell 
+                    onClick={() => handleViewDetails(booking)}
+                    sx={{ cursor: 'pointer' }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
-                        {booking.customerName.charAt(0)}
+                        {(booking.customerName || '?').charAt(0)}
                       </Avatar>
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {booking.customerName}
+                          {booking.customerName || 'Unknown Customer'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {booking.customerEmail}
+                          {booking.customerEmail || 'No email'}
                         </Typography>
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{booking.serviceName}</Typography>
+                  <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
+                    <Typography variant="body2">{booking.serviceName || 'Unknown Service'}</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
                     <Typography variant="body2">{formatDate(booking.scheduledDate)}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {booking.scheduledTime}
+                      {booking.scheduledTime || 'TBD'}
                     </Typography>
+                  </TableCell>
+                  <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      ₹{booking.amount || 0}
+                      {booking.quantity > 1 && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          (Qty: {booking.quantity})
+                        </Typography>
+                      )}
+                    </Typography>
+                  </TableCell>
+                  <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
+                    {getStatusChip(booking.status)}
+                  </TableCell>
+                  <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
+                    {getPaymentChip(booking.paymentStatus)}
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      ${booking.amount}
-                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenMenu(e, booking.orderId);
+                      }}
+                      disabled={updating}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
                   </TableCell>
-                  <TableCell>{getStatusChip(booking.status)}</TableCell>
-                  <TableCell>{getPaymentChip(booking.paymentStatus)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -291,22 +534,24 @@ const BookingsList = ({ provider }) => {
 
       {/* Actions Menu */}
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}>
-        {bookings.find((b) => b.id === menuBookingId)?.status === 'pending' && (
-          <MenuItem onClick={() => handleConfirm(menuBookingId)}>
+        {bookings.find((b) => b.orderId === menuBookingId)?.status === 'REQUESTED' && (
+          <MenuItem onClick={() => handleConfirm(menuBookingId)} disabled={updating}>
             <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} color="info" />
-            Confirm Booking
+            Schedule Booking
           </MenuItem>
         )}
-        {bookings.find((b) => b.id === menuBookingId)?.status === 'confirmed' && (
-          <MenuItem onClick={() => handleComplete(menuBookingId)}>
+        {bookings.find((b) => b.orderId === menuBookingId)?.status === 'SCHEDULED' && (
+          <MenuItem onClick={() => handleComplete(menuBookingId)} disabled={updating}>
             <DoneIcon fontSize="small" sx={{ mr: 1 }} color="success" />
             Mark as Completed
           </MenuItem>
         )}
-        <MenuItem onClick={() => handleCancel(menuBookingId)}>
-          <CancelIcon fontSize="small" sx={{ mr: 1 }} color="error" />
-          Cancel Booking
-        </MenuItem>
+        {['REQUESTED', 'PAID', 'SCHEDULED'].includes(bookings.find((b) => b.orderId === menuBookingId)?.status) && (
+          <MenuItem onClick={() => handleCancel(menuBookingId)} disabled={updating}>
+            <CancelIcon fontSize="small" sx={{ mr: 1 }} color="error" />
+            Cancel Booking
+          </MenuItem>
+        )}
       </Menu>
 
       {/* Booking Details Dialog */}
@@ -323,17 +568,22 @@ const BookingsList = ({ provider }) => {
           {selectedBooking && (
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', fontSize: '1.5rem' }}>
-                    {selectedBooking.customerName.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6">{selectedBooking.customerName}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Booking ID: {selectedBooking.id}
-                    </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', fontSize: '1.5rem' }}>
+                      {(selectedBooking.customerName || '?').charAt(0)}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6">{selectedBooking.customerName || 'Unknown Customer'}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Booking ID: {selectedBooking.orderId || selectedBooking.id}
+                      </Typography>
+                      {selectedBooking.transactionId && (
+                        <Typography variant="body2" color="text.secondary">
+                          Transaction: {selectedBooking.transactionId}
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
-                </Box>
               </Grid>
 
               <Grid item xs={12} md={6}>
@@ -351,8 +601,20 @@ const BookingsList = ({ provider }) => {
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <LocationOnIcon fontSize="small" color="action" />
-                    <Typography variant="body2">{selectedBooking.address}</Typography>
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{selectedBooking.address}</Typography>
                   </Box>
+                  {selectedBooking.originalUser && (
+                    <Box sx={{ mt: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Customer ID: {selectedBooking.originalUser.userId || selectedBooking.originalUser.id}
+                      </Typography>
+                      {selectedBooking.originalUser.createdAt && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          Member since: {formatDate(selectedBooking.originalUser.createdAt)}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
                 </Stack>
               </Grid>
 
@@ -363,8 +625,18 @@ const BookingsList = ({ provider }) => {
                 <Stack spacing={1}>
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {selectedBooking.serviceName}
+                      {selectedBooking.serviceName || 'Unknown Service'}
                     </Typography>
+                    {selectedBooking.serviceCategory && (
+                      <Typography variant="caption" color="text.secondary">
+                        Category: {selectedBooking.serviceCategory}
+                      </Typography>
+                    )}
+                    {selectedBooking.serviceDescription && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                        {selectedBooking.serviceDescription}
+                      </Typography>
+                    )}
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CalendarTodayIcon fontSize="small" color="action" />
@@ -372,12 +644,13 @@ const BookingsList = ({ provider }) => {
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AccessTimeIcon fontSize="small" color="action" />
-                    <Typography variant="body2">{selectedBooking.scheduledTime}</Typography>
+                    <Typography variant="body2">{selectedBooking.scheduledTime || 'TBD'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AttachMoneyIcon fontSize="small" color="action" />
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      ${selectedBooking.amount}
+                      ₹{selectedBooking.amount || 0}
+                      {selectedBooking.quantity > 1 && ` (Qty: ${selectedBooking.quantity})`}
                     </Typography>
                   </Box>
                 </Stack>
@@ -444,46 +717,49 @@ const BookingsList = ({ provider }) => {
           )}
         </DialogContent>
         <DialogActions>
-          {selectedBooking?.status === 'pending' && (
+          {selectedBooking?.status === 'REQUESTED' && (
             <Button
               onClick={() => {
-                handleConfirm(selectedBooking.id);
+                handleConfirm(selectedBooking.orderId);
                 handleCloseDetails();
               }}
               variant="contained"
               color="info"
               startIcon={<CheckCircleIcon />}
+              disabled={updating}
             >
-              Confirm Booking
+              {updating ? 'Updating...' : 'Schedule Booking'}
             </Button>
           )}
-          {selectedBooking?.status === 'confirmed' && (
+          {selectedBooking?.status === 'SCHEDULED' && (
             <Button
               onClick={() => {
-                handleComplete(selectedBooking.id);
+                handleComplete(selectedBooking.orderId);
                 handleCloseDetails();
               }}
               variant="contained"
               color="success"
               startIcon={<DoneIcon />}
+              disabled={updating}
             >
-              Mark as Completed
+              {updating ? 'Updating...' : 'Mark as Completed'}
             </Button>
           )}
-          {selectedBooking?.status !== 'cancelled' && selectedBooking?.status !== 'completed' && (
+          {['REQUESTED', 'PAID', 'SCHEDULED'].includes(selectedBooking?.status) && (
             <Button
               onClick={() => {
-                handleCancel(selectedBooking.id);
+                handleCancel(selectedBooking.orderId);
                 handleCloseDetails();
               }}
               variant="outlined"
               color="error"
               startIcon={<CancelIcon />}
+              disabled={updating}
             >
-              Cancel Booking
+              {updating ? 'Updating...' : 'Cancel Booking'}
             </Button>
           )}
-          <Button onClick={handleCloseDetails}>Close</Button>
+          <Button onClick={handleCloseDetails} disabled={updating}>Close</Button>
         </DialogActions>
       </Dialog>
     </Paper>

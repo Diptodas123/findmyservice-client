@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Paper,
   Typography,
@@ -23,7 +23,10 @@ import {
   Divider,
   IconButton,
   Menu,
-  MenuItem
+  MenuItem,
+  CircularProgress,
+  Alert,
+  Skeleton
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -31,23 +34,145 @@ import {
   Star as StarIcon,
   Reply as ReplyIcon,
   MoreVert as MoreVertIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
-import { MOCK_PROVIDER_REVIEWS } from '../../../mockData';
+import toastMessage from '../../utils/toastMessage';
 
 const ReviewsManagement = ({ provider }) => {
-  const [reviews, setReviews] = useState(MOCK_PROVIDER_REVIEWS);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTab, setFilterTab] = useState('all'); // all, unanswered, answered, 5star, 4star, 3star, 2star, 1star
-  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
-  const [selectedReview, setSelectedReview] = useState(null);
-  const [replyText, setReplyText] = useState('');
+  const [filterTab, setFilterTab] = useState('all'); // all, 5star, 4star, 3star, 2star, 1star
+
+  // Fetch feedbacks when component mounts or provider changes
+  useEffect(() => {
+    if (provider?.providerId) {
+      fetchFeedbacks();
+    }
+  }, [provider?.providerId]);
+
+  const fetchFeedbacks = async () => {
+    if (!provider?.providerId) {
+      toastMessage({ msg: 'Provider information not available', type: 'error' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/feedbacks/provider/${provider.providerId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const feedbacks = await response.json();
+      
+      // Fetch additional details for each feedback
+      const enrichedFeedbacks = await Promise.all(
+        feedbacks.map(async (feedback) => {
+          try {
+            // Fetch user details
+            let userDetails = null;
+            if (feedback.userId) {
+              try {
+                const userResponse = await fetch(`http://localhost:8080/api/v1/users/${feedback.userId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
+                if (userResponse.ok) {
+                  userDetails = await userResponse.json();
+                }
+              } catch (error) {
+                console.warn('Failed to fetch user details:', error);
+              }
+            }
+
+            // Fetch service details
+            let serviceDetails = null;
+            if (feedback.serviceId) {
+              try {
+                const serviceResponse = await fetch(`http://localhost:8080/api/v1/services/${feedback.serviceId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
+                if (serviceResponse.ok) {
+                  serviceDetails = await serviceResponse.json();
+                }
+              } catch (error) {
+                console.warn('Failed to fetch service details:', error);
+              }
+            }
+
+            // Transform feedback data with enriched details
+            return {
+              feedbackId: feedback.feedbackId,
+              rating: parseFloat(feedback.rating) || 0,
+              comment: feedback.comment || '',
+              createdAt: feedback.createdAt,
+              userId: {
+                name: userDetails?.name || 'Anonymous User',
+                email: userDetails?.email || '',
+                profilePictureUrl: userDetails?.profilePictureUrl || ''
+              },
+              serviceId: {
+                serviceName: serviceDetails?.serviceName || 'Unknown Service',
+                serviceId: feedback.serviceId
+              },
+              // Store original references for potential future use
+              originalUser: userDetails,
+              originalService: serviceDetails,
+              originalFeedback: feedback,
+            };
+          } catch (error) {
+            console.error('Error enriching feedback data:', error);
+            // Return basic feedback data if enrichment fails
+            return {
+              feedbackId: feedback.feedbackId,
+              rating: parseFloat(feedback.rating) || 0,
+              comment: feedback.comment || '',
+              createdAt: feedback.createdAt,
+              userId: {
+                name: 'Anonymous User',
+                email: '',
+                profilePictureUrl: ''
+              },
+              serviceId: {
+                serviceName: 'Unknown Service',
+                serviceId: feedback.serviceId
+              },
+              originalFeedback: feedback,
+            };
+          }
+        })
+      );
+
+      setReviews(enrichedFeedbacks);
+      toastMessage({ msg: 'Feedbacks loaded successfully', type: 'success' });
+    } catch (error) {
+      console.error('Error fetching feedbacks:', error);
+      toastMessage({ msg: 'Failed to load feedbacks. Please try again.', type: 'error' });
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Calculate statistics
   const stats = useMemo(() => {
     const total = Array.isArray(reviews) ? reviews.length : 0;
-    const answered = Array.isArray(reviews) ? reviews.filter(r => !!r?.providerResponse).length : 0;
-    const unanswered = Math.max(0, total - answered);
     const avgRating = total ? (reviews.reduce((sum, r) => sum + (Number(r?.rating) || 0), 0) / total) : 0;
 
     const ratingDistribution = {
@@ -58,7 +183,7 @@ const ReviewsManagement = ({ provider }) => {
       1: Array.isArray(reviews) ? reviews.filter(r => Number(r?.rating) === 1).length : 0,
     };
 
-    return { total, answered, unanswered, avgRating, ratingDistribution };
+    return { total, avgRating, ratingDistribution };
   }, [reviews]);
 
   // Filter reviews
@@ -66,11 +191,7 @@ const ReviewsManagement = ({ provider }) => {
     let filtered = Array.isArray(reviews) ? [...reviews] : [];
 
     // Filter by tab
-    if (filterTab === 'answered') {
-      filtered = filtered.filter(r => !!r?.providerResponse);
-    } else if (filterTab === 'unanswered') {
-      filtered = filtered.filter(r => !r?.providerResponse);
-    } else if (filterTab.endsWith('star')) {
+    if (filterTab.endsWith('star')) {
       const rating = parseInt(filterTab[0]);
       filtered = filtered.filter(r => Number(r?.rating) === rating);
     }
@@ -89,56 +210,6 @@ const ReviewsManagement = ({ provider }) => {
     return filtered.slice().sort((a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0));
   }, [reviews, filterTab, searchQuery]);
 
-  const handleOpenReply = (review) => {
-    setSelectedReview(review);
-    setReplyText(review.providerResponse || '');
-    setReplyDialogOpen(true);
-  };
-
-  const handleCloseReply = () => {
-    setReplyDialogOpen(false);
-    setSelectedReview(null);
-    setReplyText('');
-  };
-
-  const handleSubmitReply = async () => {
-    if (!replyText.trim() || !selectedReview) return;
-
-    try {
-      // TODO: API call to save response
-      // await apiClient.post(`/api/v1/feedbacks/${selectedReview.feedbackId}/response`, { response: replyText });
-
-      // Update locally
-      setReviews(prev => prev.map(r => 
-        r.feedbackId === selectedReview.feedbackId 
-          ? { ...r, providerResponse: replyText }
-          : r
-      ));
-
-      handleCloseReply();
-    } catch (error) {
-      console.error('Error submitting reply:', error);
-      alert('Failed to submit reply. Please try again.');
-    }
-  };
-
-  const handleDeleteReply = async (reviewId) => {
-    try {
-      // TODO: API call to delete response
-      // await apiClient.delete(`/api/v1/feedbacks/${reviewId}/response`);
-
-      // Update locally
-      setReviews(prev => prev.map(r => 
-        r.feedbackId === reviewId 
-          ? { ...r, providerResponse: null }
-          : r
-      ));
-    } catch (error) {
-      console.error('Error deleting reply:', error);
-      alert('Failed to delete reply. Please try again.');
-    }
-  };
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -154,44 +225,54 @@ const ReviewsManagement = ({ provider }) => {
 
   return (
     <Paper sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>Reviews Management</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5">Reviews Management</Typography>
+        <Button
+          variant="outlined"
+          startIcon={loading ? <CircularProgress size={16} /> : <RefreshIcon />}
+          onClick={fetchFeedbacks}
+          disabled={loading}
+          size="small"
+        >
+          Refresh
+        </Button>
+      </Box>
 
       {/* Statistics Overview */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
-            <CardContent>
-              <Typography variant="h4">{stats.avgRating.toFixed(1)}</Typography>
-              <Typography variant="body2">Average Rating</Typography>
-              <Rating value={stats.avgRating} precision={0.1} readOnly sx={{ mt: 1, color: 'white' }} />
-            </CardContent>
-          </Card>
+      {loading ? (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {[...Array(2)].map((_, index) => (
+            <Grid item xs={12} md={6} key={index}>
+              <Card>
+                <CardContent>
+                  <Skeleton variant="text" width="60%" height={40} />
+                  <Skeleton variant="text" width="80%" />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h4">{stats.total}</Typography>
-              <Typography variant="body2" color="text.secondary">Total Reviews</Typography>
-            </CardContent>
-          </Card>
+      ) : (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ bgcolor: 'primary.main', color: 'white' }}>
+              <CardContent>
+                <Typography variant="h4">{stats.avgRating.toFixed(1)}</Typography>
+                <Typography variant="body2">Average Rating</Typography>
+                <Rating value={stats.avgRating} precision={0.1} readOnly sx={{ mt: 1, color: 'white' }} />
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h4">{stats.total}</Typography>
+                <Typography variant="body2" color="text.secondary">Total Reviews</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h4" color="success.main">{stats.answered}</Typography>
-              <Typography variant="body2" color="text.secondary">Answered</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h4" color="warning.main">{stats.unanswered}</Typography>
-              <Typography variant="body2" color="text.secondary">Unanswered</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      )}
 
       {/* Rating Distribution */}
       <Card sx={{ mb: 3, p: 2 }}>
@@ -242,8 +323,6 @@ const ReviewsManagement = ({ provider }) => {
           scrollButtons="auto"
         >
           <Tab label={`All (${stats.total})`} value="all" />
-          <Tab label={`Unanswered (${stats.unanswered})`} value="unanswered" />
-          <Tab label={`Answered (${stats.answered})`} value="answered" />
           <Tab label={`5 Star (${stats.ratingDistribution[5]})`} value="5star" />
           <Tab label={`4 Star (${stats.ratingDistribution[4]})`} value="4star" />
           <Tab label={`3 Star (${stats.ratingDistribution[3]})`} value="3star" />
@@ -254,11 +333,31 @@ const ReviewsManagement = ({ provider }) => {
 
       {/* Reviews List */}
       <Stack spacing={2}>
-        {filteredReviews.length === 0 ? (
+        {loading ? (
+          [...Array(3)].map((_, index) => (
+            <Card key={index}>
+              <CardContent>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="30%" />
+                    <Skeleton variant="text" width="60%" />
+                  </Box>
+                </Box>
+                <Skeleton variant="text" width="100%" />
+                <Skeleton variant="text" width="80%" />
+                <Skeleton variant="rectangular" width={120} height={32} sx={{ mt: 1 }} />
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredReviews.length === 0 ? (
           <Card>
             <CardContent>
               <Typography variant="body1" color="text.secondary" textAlign="center">
-                No reviews found
+                {reviews.length === 0 
+                  ? "No reviews yet. Reviews will appear here once customers provide feedback." 
+                  : "No reviews found matching your criteria."
+                }
               </Typography>
             </CardContent>
           </Card>
@@ -296,98 +395,11 @@ const ReviewsManagement = ({ provider }) => {
                 <Typography variant="body1" sx={{ mb: 2 }}>
                   {review.comment}
                 </Typography>
-
-                {review.providerResponse ? (
-                  <Box 
-                    sx={{ 
-                      bgcolor: 'grey.50', 
-                      p: 2, 
-                      borderRadius: 1, 
-                      borderLeft: 3,
-                      borderColor: 'primary.main'
-                    }}
-                  >
-                    <Typography variant="subtitle2" color="primary" gutterBottom>
-                      Your Response
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {review.providerResponse}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                      <Button 
-                        size="small" 
-                        startIcon={<ReplyIcon />}
-                        onClick={() => handleOpenReply(review)}
-                      >
-                        Edit Reply
-                      </Button>
-                      <Button 
-                        size="small" 
-                        color="error"
-                        startIcon={<DeleteIcon />}
-                        onClick={() => handleDeleteReply(review.feedbackId)}
-                      >
-                        Delete Reply
-                      </Button>
-                    </Box>
-                  </Box>
-                ) : (
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<ReplyIcon />}
-                    onClick={() => handleOpenReply(review)}
-                  >
-                    Reply to Review
-                  </Button>
-                )}
               </CardContent>
             </Card>
           ))
         )}
       </Stack>
-
-      {/* Reply Dialog */}
-      <Dialog open={replyDialogOpen} onClose={handleCloseReply} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {selectedReview?.providerResponse ? 'Edit Reply' : 'Reply to Review'}
-        </DialogTitle>
-        <DialogContent>
-          {selectedReview && (
-            <>
-              <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Typography variant="subtitle2">{selectedReview?.userId?.name || 'Anonymous'}</Typography>
-                  <Rating value={Number(selectedReview?.rating) || 0} size="small" readOnly />
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedReview.comment}
-                </Typography>
-              </Box>
-              <TextField
-                label="Your Response"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                multiline
-                rows={4}
-                fullWidth
-                placeholder="Write a professional and helpful response..."
-                helperText={`${replyText.length}/500 characters`}
-                inputProps={{ maxLength: 500 }}
-              />
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseReply}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSubmitReply}
-            disabled={!replyText.trim()}
-          >
-            {selectedReview?.providerResponse ? 'Update Reply' : 'Submit Reply'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Paper>
   );
 };
