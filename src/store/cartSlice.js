@@ -28,6 +28,13 @@ const cartSlice = createSlice({
         state.items = state.items.filter(i => i.serviceId !== predicate);
       }
     },
+    updateRequestedDate(state, action) {
+      const { serviceId, requestedDate } = action.payload;
+      const item = state.items.find(i => i.serviceId === serviceId);
+      if (item) {
+        item.requestedDate = requestedDate;
+      }
+    },
     clearCart(state) {
       state.items = [];
     },
@@ -37,5 +44,5 @@ const cartSlice = createSlice({
   }
 });
 
-export const { addItem, removeItem, clearCart, setCart } = cartSlice.actions;
+export const { addItem, removeItem, clearCart, setCart, updateRequestedDate } = cartSlice.actions;
 export default cartSlice.reducer;

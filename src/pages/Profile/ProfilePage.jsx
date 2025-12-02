@@ -758,9 +758,9 @@ const ProfilePage = () => {
                     borderColor: 'divider'
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">
-                      {formatDate(order.createdAt)}
+                      Order placed: {formatDate(order.createdAt)}
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1.5}>
                       <Typography variant="body1" fontWeight="600" color="primary.main">
@@ -775,6 +775,26 @@ const ProfilePage = () => {
                         sx={{ fontWeight: 500 }}
                       />
                     </Box>
+                  </Box>
+                  
+                  {/* Order Timeline Dates */}
+                  <Box display="flex" gap={3} sx={{ mt: 1 }}>
+                    {order.requestedDate && (
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <CalendarToday sx={{ fontSize: 14, color: 'text.secondary' }} />
+                        <Typography variant="caption" color="text.secondary">
+                          Requested: {formatDate(order.requestedDate)}
+                        </Typography>
+                      </Box>
+                    )}
+                    {order.scheduledDate && (
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <Schedule sx={{ fontSize: 14, color: 'primary.main' }} />
+                        <Typography variant="caption" color="primary.main" fontWeight="500">
+                          Scheduled: {formatDate(order.scheduledDate)}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </Box>
 
