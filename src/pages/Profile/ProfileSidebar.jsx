@@ -5,7 +5,8 @@ import {
   Settings,
   AccountCircle,
   Logout as LogoutIcon,
-  Delete
+  Delete,
+  History
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import {
@@ -68,6 +69,11 @@ const ProfileSidebar = ({ activeTab, setActiveTab, profilePicturePreview }) => {
       id: 'address',
       label: 'Address',
       icon: <LocationOn />
+    },
+    {
+      id: 'orders',
+      label: 'Order History',
+      icon: <History />
     },
     {
       id: 'settings',
