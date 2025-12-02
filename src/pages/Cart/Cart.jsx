@@ -25,6 +25,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { removeItem, clearCart } from '../../store/cartSlice';
 import formatINR from '../../utils/formatCurrency';
 import toastMessage from '../../utils/toastMessage';
+import apiClient from '../../utils/apiClient';
 
 const Cart = () => {
 
@@ -87,21 +88,7 @@ const Cart = () => {
 
             console.log('Checkout payload:', orderPayload);
 
-            const response = await fetch('http://localhost:8080/api/v1/orders/checkout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderPayload),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
+            const result = await apiClient.post('/api/v1/orders/checkout', orderPayload);
             
             setCheckoutOpen(false);
             dispatch(clearCart());
