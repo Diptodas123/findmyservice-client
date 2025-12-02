@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import ProfileSidebar from './ProfileSidebar.jsx';
 import { toast } from 'react-toastify';
-import { addItem, clearCart } from '../../store/cartSlice';
+import { addItem } from '../../store/cartSlice';
 import {
   Box,
   Container,
@@ -57,9 +57,7 @@ const ProfilePage = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   
   // Dialog state for reorder conflicts
-  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
-  const [conflictOrder, setConflictOrder] = useState(null);
-  const [currentCartProvider, setCurrentCartProvider] = useState('');
+
   
   // Popup dialog state
   const [popupOpen, setPopupOpen] = useState(false);
@@ -317,21 +315,7 @@ const ProfilePage = () => {
       return;
     }
 
-    // Check for provider conflicts
-    if (cartItems.length > 0) {
-      const currentCartProviderName = cartItems[0].providerName || cartItems[0].providerId;
-      const orderProviderName = order.providerData?.providerName || order.providerId;
-      
-      if (currentCartProviderName && orderProviderName && currentCartProviderName !== orderProviderName) {
-        // Show Material-UI Dialog for provider conflict
-        setCurrentCartProvider(currentCartProviderName);
-        setConflictOrder(order);
-        setConflictDialogOpen(true);
-        return;
-      }
-    }
-
-    // Proceed with reorder if no conflicts
+    // Proceed with reorder (no provider restrictions)
     executeReorder(order);
   };
 
@@ -340,8 +324,7 @@ const ProfilePage = () => {
     const hasLineItems = lineItems && lineItems.length > 0;
 
     try {
-      // Clear current cart (either due to conflict or to start fresh)
-      dispatch(clearCart());
+      // Add services to existing cart (no clearing needed)
       
       if (hasLineItems) {
         // Handle multiple services (lineItemDTOS)
@@ -401,16 +384,7 @@ const ProfilePage = () => {
     }
   };
 
-  const handleConfirmReorder = () => {
-    setConflictDialogOpen(false);
-    executeReorder(conflictOrder);
-  };
 
-  const handleCancelReorder = () => {
-    setConflictDialogOpen(false);
-    setConflictOrder(null);
-    setCurrentCartProvider('');
-  };
 
   const validatePasswordStrength = (password) => {
     return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/.test(password);
@@ -941,75 +915,7 @@ const ProfilePage = () => {
         </Stack>
       </Container>
       
-      {/* Provider Conflict Dialog */}
-      <Dialog
-        open={conflictDialogOpen}
-        onClose={handleCancelReorder}
-        maxWidth="sm"
-        fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'background.paper',
-              borderRadius: 2
-            }
-          }
-        }}
-      >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 1,
-          color: theme.palette.mode === 'dark' ? 'warning.light' : 'warning.main'
-        }}>
-          <WarningIcon color="warning" />
-          Different Service Provider
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: theme.palette.text.primary }}>
-            You can only order services from one provider at a time.
-          </DialogContentText>
-          <DialogContentText sx={{ 
-            mt: 2, 
-            fontWeight: 600,
-            color: theme.palette.text.primary
-          }}>
-            Current cart: {currentCartProvider}
-          </DialogContentText>
-          <DialogContentText sx={{ 
-            mt: 1,
-            color: theme.palette.text.secondary
-          }}>
-            To reorder services from <strong>{conflictOrder?.providerData?.providerName || 'this provider'}</strong>, 
-            your current cart will be cleared first.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button 
-            onClick={handleCancelReorder}
-            variant="outlined"
-            sx={{
-              borderColor: theme.palette.mode === 'dark' ? 'grey.600' : 'grey.400',
-              color: theme.palette.text.primary
-            }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirmReorder}
-            variant="contained"
-            color="warning"
-            sx={{
-              bgcolor: theme.palette.mode === 'dark' ? 'warning.dark' : 'warning.main',
-              '&:hover': {
-                bgcolor: theme.palette.mode === 'dark' ? 'warning.main' : 'warning.dark'
-              }
-            }}
-          >
-            Clear Cart & Reorder
-          </Button>
-        </DialogActions>
-      </Dialog>
+
 
       {/* Success/Error Popup Dialog */}
       <Dialog
