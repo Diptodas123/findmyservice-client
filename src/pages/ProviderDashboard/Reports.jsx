@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Paper,
   Typography,
@@ -18,7 +18,8 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -26,7 +27,7 @@ import {
   TableChart as ExcelIcon,
   Assessment as ReportIcon
 } from '@mui/icons-material';
-import { MOCK_BOOKINGS, MOCK_PROVIDER_REVIEWS, MOCK_PROVIDER } from '../../../mockData';
+import apiClient from '../../utils/apiClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -35,9 +36,79 @@ const Reports = ({ provider }) => {
   const [dateRange, setDateRange] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Fetch orders from API
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch orders for the provider
+        const ordersData = await apiClient.get(`/api/v1/orders/provider/${provider.providerId}`);
+        const ordersArray = Array.isArray(ordersData) ? ordersData : [];
+        
+        // Enrich orders with user and service details
+        const enrichedOrders = await Promise.all(
+          ordersArray.map(async (order) => {
+            try {
+              let userName = 'Unknown User';
+              let serviceName = 'Unknown Service';
+              
+              // Fetch user details
+              if (order.userId) {
+                try {
+                  const userData = await apiClient.get(`/api/v1/users/${order.userId}`);
+                  userName = userData?.name || `User ${order.userId}`;
+                } catch (userError) {
+                  console.warn(`Failed to fetch user ${order.userId}:`, userError);
+                }
+              }
+              
+              // Fetch service details
+              if (order.serviceId) {
+                try {
+                  const serviceData = await apiClient.get(`/api/v1/services/${order.serviceId}`);
+                  serviceName = serviceData?.serviceName || `Service ${order.serviceId}`;
+                } catch (serviceError) {
+                  console.warn(`Failed to fetch service ${order.serviceId}:`, serviceError);
+                }
+              }
+              
+              return {
+                ...order,
+                userName,
+                serviceName
+              };
+            } catch (error) {
+              console.warn('Failed to enrich order:', error);
+              return {
+                ...order,
+                userName: 'Unknown User',
+                serviceName: 'Unknown Service'
+              };
+            }
+          })
+        );
+        
+        setOrders(enrichedOrders);
+      } catch (err) {
+        console.error('Error fetching report data:', err);
+        setError(err.message || 'Failed to load report data');
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [provider?.providerId]);
 
   // Filter data based on date range
-  const getFilteredData = (data, dateField = 'createdAt') => {
+  const getFilteredData = useCallback((data, dateField = 'createdAt') => {
     if (dateRange === 'all') return data;
 
     const now = new Date();
@@ -78,67 +149,51 @@ const Reports = ({ provider }) => {
     }
 
     return data;
-  };
+  }, [dateRange, customStartDate, customEndDate]);
 
   // Calculate report data
   const reportData = useMemo(() => {
-    const filteredBookings = getFilteredData(MOCK_BOOKINGS);
-    const filteredReviews = getFilteredData(MOCK_PROVIDER_REVIEWS);
+    const filteredBookings = getFilteredData(orders, 'createdAt');
 
-    // Bookings summary
+    // Bookings summary - normalize orderStatus to lowercase for comparison
     const totalBookings = filteredBookings.length;
-    const pendingBookings = filteredBookings.filter(b => b.status === 'pending').length;
-    const confirmedBookings = filteredBookings.filter(b => b.status === 'confirmed').length;
-    const completedBookings = filteredBookings.filter(b => b.status === 'completed').length;
-    const cancelledBookings = filteredBookings.filter(b => b.status === 'cancelled').length;
+    const pendingBookings = filteredBookings.filter(b => b.orderStatus?.toLowerCase() === 'pending').length;
+    const confirmedBookings = filteredBookings.filter(b => b.orderStatus?.toLowerCase() === 'confirmed').length;
+    const completedBookings = filteredBookings.filter(b => b.orderStatus?.toLowerCase() === 'completed').length;
+    const cancelledBookings = filteredBookings.filter(b => b.orderStatus?.toLowerCase() === 'cancelled').length;
 
-    // Revenue summary
+    // Revenue summary - using totalCost field
     const totalRevenue = filteredBookings
-      .filter(b => b.paymentStatus === 'paid')
-      .reduce((sum, b) => sum + b.amount, 0);
+      .filter(b => b.orderStatus?.toLowerCase() === 'completed')
+      .reduce((sum, b) => sum + (b.totalCost || 0), 0);
     const pendingRevenue = filteredBookings
-      .filter(b => b.paymentStatus === 'pending')
-      .reduce((sum, b) => sum + b.amount, 0);
+      .filter(b => b.orderStatus?.toLowerCase() === 'pending')
+      .reduce((sum, b) => sum + (b.totalCost || 0), 0);
 
     // Service-wise breakdown
     const serviceBreakdown = {};
     filteredBookings.forEach(booking => {
-      if (!serviceBreakdown[booking.serviceName]) {
-        serviceBreakdown[booking.serviceName] = {
+      const serviceKey = booking.serviceName || 'Unknown Service';
+      if (!serviceBreakdown[serviceKey]) {
+        serviceBreakdown[serviceKey] = {
           count: 0,
           revenue: 0,
           completed: 0,
           cancelled: 0
         };
       }
-      serviceBreakdown[booking.serviceName].count++;
-      if (booking.paymentStatus === 'paid') {
-        serviceBreakdown[booking.serviceName].revenue += booking.amount;
+      serviceBreakdown[serviceKey].count++;
+      if (booking.orderStatus?.toLowerCase() === 'completed') {
+        serviceBreakdown[serviceKey].revenue += (booking.totalCost || 0);
+        serviceBreakdown[serviceKey].completed++;
       }
-      if (booking.status === 'completed') {
-        serviceBreakdown[booking.serviceName].completed++;
-      }
-      if (booking.status === 'cancelled') {
-        serviceBreakdown[booking.serviceName].cancelled++;
+      if (booking.orderStatus?.toLowerCase() === 'cancelled') {
+        serviceBreakdown[serviceKey].cancelled++;
       }
     });
 
-    // Reviews summary
-    const totalReviews = filteredReviews.length;
-    const avgRating = totalReviews > 0
-      ? filteredReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
-      : 0;
-    const ratingDistribution = {
-      5: filteredReviews.filter(r => r.rating === 5).length,
-      4: filteredReviews.filter(r => r.rating === 4).length,
-      3: filteredReviews.filter(r => r.rating === 3).length,
-      2: filteredReviews.filter(r => r.rating === 2).length,
-      1: filteredReviews.filter(r => r.rating === 1).length,
-    };
-
     return {
       bookings: filteredBookings,
-      reviews: filteredReviews,
       totalBookings,
       pendingBookings,
       confirmedBookings,
@@ -146,12 +201,9 @@ const Reports = ({ provider }) => {
       cancelledBookings,
       totalRevenue,
       pendingRevenue,
-      serviceBreakdown,
-      totalReviews,
-      avgRating,
-      ratingDistribution
+      serviceBreakdown
     };
-  }, [reportType, dateRange, customStartDate, customEndDate]);
+  }, [orders, getFilteredData]);
 
   // Export to CSV
   const exportToCSV = () => {
@@ -160,9 +212,9 @@ const Reports = ({ provider }) => {
 
     if (reportType === 'bookings') {
       filename = `bookings_report_${new Date().toISOString().split('T')[0]}.csv`;
-      csvContent = 'Booking ID,Customer Name,Service,Date,Time,Status,Amount,Payment Status\n';
+      csvContent = 'Order ID,User Name,Service Name,Date,Status,Total Cost\n';
       reportData.bookings.forEach(booking => {
-        csvContent += `${booking.id},${booking.customerName},${booking.serviceName},${new Date(booking.scheduledDate).toLocaleDateString()},${booking.scheduledTime},${booking.status},${booking.amount},${booking.paymentStatus}\n`;
+        csvContent += `${booking.orderId},${booking.userName},${booking.serviceName},${new Date(booking.createdAt).toLocaleDateString()},${booking.orderStatus},${booking.totalCost}\n`;
       });
     } else if (reportType === 'revenue') {
       filename = `revenue_report_${new Date().toISOString().split('T')[0]}.csv`;
@@ -171,14 +223,6 @@ const Reports = ({ provider }) => {
         csvContent += `${name},${stats.count},${stats.completed},${stats.cancelled},${stats.revenue}\n`;
       });
       csvContent += `\nTotal Revenue,,,₹${reportData.totalRevenue}\n`;
-    } else if (reportType === 'reviews') {
-      filename = `reviews_report_${new Date().toISOString().split('T')[0]}.csv`;
-      csvContent = 'Customer Name,Service,Rating,Comment,Date\n';
-      reportData.reviews.forEach(review => {
-        const comment = review.comment.replace(/,/g, ';').replace(/\n/g, ' ');
-        csvContent += `${review.userId.name},${review.serviceId.serviceName},${review.rating},"${comment}",${new Date(review.createdAt).toLocaleDateString()}\n`;
-      });
-      csvContent += `\nAverage Rating,${reportData.avgRating.toFixed(2)}\n`;
     }
 
     // Create download link
@@ -198,7 +242,7 @@ const Reports = ({ provider }) => {
 
     // Header
     doc.setFontSize(18);
-    doc.text(`${MOCK_PROVIDER.providerName}`, 14, 15);
+    doc.text(`${provider?.providerName || 'Provider'} Reports`, 14, 15);
     doc.setFontSize(11);
     doc.text(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report`, 14, 22);
     doc.setFontSize(9);
@@ -215,17 +259,17 @@ const Reports = ({ provider }) => {
 
       // Table
       const tableData = reportData.bookings.map(b => [
-        b.id,
-        b.customerName,
-        b.serviceName,
-        new Date(b.scheduledDate).toLocaleDateString(),
-        b.status,
-        `Rs. ${b.amount}`
+        b.orderId,
+        b.userName || 'Unknown User',
+        b.serviceName || 'Unknown Service',
+        new Date(b.createdAt).toLocaleDateString(),
+        b.orderStatus,
+        `Rs. ${b.totalCost || 0}`
       ]);
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Booking ID', 'Customer', 'Service', 'Date', 'Status', 'Amount']],
+        head: [['Order ID', 'Customer', 'Service', 'Date', 'Status', 'Total Cost']],
         body: tableData,
         theme: 'striped',
         headStyles: { fillColor: [66, 139, 202] },
@@ -264,41 +308,6 @@ const Reports = ({ provider }) => {
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [240, 240, 240];
           }
-        }
-      });
-    } else if (reportType === 'reviews') {
-      // Summary
-      doc.setFontSize(10);
-      doc.text(`Total Reviews: ${reportData.totalReviews} | Average Rating: ${reportData.avgRating.toFixed(2)} Stars`, 14, yPos);
-      yPos += 7;
-
-      // Rating distribution
-      doc.text('Rating Distribution:', 14, yPos);
-      yPos += 5;
-      [5, 4, 3, 2, 1].forEach(rating => {
-        doc.text(`${rating} Star: ${reportData.ratingDistribution[rating]} reviews`, 20, yPos);
-        yPos += 5;
-      });
-      yPos += 3;
-
-      // Reviews table
-      const tableData = reportData.reviews.map(r => [
-        r.userId.name,
-        r.serviceId.serviceName,
-        `${r.rating} Stars`,
-        r.comment.substring(0, 60) + (r.comment.length > 60 ? '...' : ''),
-        new Date(r.createdAt).toLocaleDateString()
-      ]);
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Customer', 'Service', 'Rating', 'Comment', 'Date']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [66, 139, 202] },
-        styles: { fontSize: 8 },
-        columnStyles: {
-          3: { cellWidth: 70 }
         }
       });
     }
@@ -349,33 +358,33 @@ const Reports = ({ provider }) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Booking ID</TableCell>
-              <TableCell>Customer</TableCell>
-              <TableCell>Service</TableCell>
+              <TableCell>Order ID</TableCell>
+              <TableCell>Customer Name</TableCell>
+              <TableCell>Service Name</TableCell>
               <TableCell>Date</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell align="right">Amount</TableCell>
+              <TableCell align="right">Total Cost</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {reportData.bookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell>{booking.id}</TableCell>
-                <TableCell>{booking.customerName}</TableCell>
+              <TableRow key={booking.orderId}>
+                <TableCell>{booking.orderId}</TableCell>
+                <TableCell>{booking.userName}</TableCell>
                 <TableCell>{booking.serviceName}</TableCell>
-                <TableCell>{new Date(booking.scheduledDate).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(booking.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <Chip 
-                    label={booking.status} 
+                    label={booking.orderStatus} 
                     size="small"
                     color={
-                      booking.status === 'completed' ? 'success' :
-                      booking.status === 'confirmed' ? 'info' :
-                      booking.status === 'pending' ? 'warning' : 'error'
+                      booking.orderStatus?.toLowerCase() === 'completed' ? 'success' :
+                      booking.orderStatus?.toLowerCase() === 'confirmed' ? 'info' :
+                      booking.orderStatus?.toLowerCase() === 'pending' ? 'warning' : 'error'
                     }
                   />
                 </TableCell>
-                <TableCell align="right">₹{booking.amount}</TableCell>
+                <TableCell align="right">₹{booking.totalCost}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -438,89 +447,6 @@ const Reports = ({ provider }) => {
     </Box>
   );
 
-  const renderReviewsReport = () => (
-    <Box>
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary">{reportData.totalReviews}</Typography>
-              <Typography variant="body2" color="text.secondary">Total Reviews</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="warning.main">{reportData.avgRating.toFixed(1)}</Typography>
-              <Typography variant="body2" color="text.secondary">Average Rating</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="success.main">{reportData.ratingDistribution[5]}</Typography>
-              <Typography variant="body2" color="text.secondary">5 Star Reviews</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Card sx={{ mb: 3, p: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>Rating Distribution</Typography>
-        {[5, 4, 3, 2, 1].map(rating => (
-          <Box key={rating} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Typography variant="body2" sx={{ minWidth: 60 }}>{rating} Star</Typography>
-            <Box sx={{ flex: 1, bgcolor: 'grey.200', height: 24, borderRadius: 1, overflow: 'hidden' }}>
-              <Box 
-                sx={{ 
-                  width: `${(reportData.ratingDistribution[rating] / reportData.totalReviews) * 100}%`,
-                  bgcolor: 'warning.main',
-                  height: '100%'
-                }}
-              />
-            </Box>
-            <Typography variant="body2" sx={{ minWidth: 40, textAlign: 'right' }}>
-              {reportData.ratingDistribution[rating]}
-            </Typography>
-          </Box>
-        ))}
-      </Card>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Customer Name</TableCell>
-              <TableCell>Service</TableCell>
-              <TableCell align="center">Rating</TableCell>
-              <TableCell>Comment</TableCell>
-              <TableCell>Date</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {reportData.reviews.map((review) => (
-              <TableRow key={review.feedbackId}>
-                <TableCell>{review.userId.name}</TableCell>
-                <TableCell>{review.serviceId.serviceName}</TableCell>
-                <TableCell align="center">
-                  <Chip 
-                    label={`${review.rating} ⭐`} 
-                    size="small"
-                    color={review.rating >= 4 ? 'success' : review.rating === 3 ? 'warning' : 'error'}
-                  />
-                </TableCell>
-                <TableCell sx={{ maxWidth: 300 }}>{review.comment}</TableCell>
-                <TableCell>{new Date(review.createdAt).toLocaleDateString()}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
-  );
-
   return (
     <Paper sx={{ p: 3 }}>
       <Typography variant="h5" gutterBottom>Reports & Export</Typography>
@@ -541,7 +467,6 @@ const Reports = ({ provider }) => {
             >
               <MenuItem value="bookings">Bookings Report</MenuItem>
               <MenuItem value="revenue">Revenue Report</MenuItem>
-              <MenuItem value="reviews">Reviews Report</MenuItem>
             </TextField>
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -610,9 +535,20 @@ const Reports = ({ provider }) => {
       </Card>
 
       {/* Report Content */}
-      {reportType === 'bookings' && renderBookingsReport()}
-      {reportType === 'revenue' && renderRevenueReport()}
-      {reportType === 'reviews' && renderReviewsReport()}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      ) : (
+        <>
+          {reportType === 'bookings' && renderBookingsReport()}
+          {reportType === 'revenue' && renderRevenueReport()}
+        </>
+      )}
     </Paper>
   );
 };

@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, CardMedia, Box, Chip, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from '@mui/material';
+import { Card, CardContent, Typography, CardMedia, Box, Chip, Button, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useThemeMode } from '../../theme/useThemeMode';
@@ -16,8 +16,6 @@ export default function ServiceCard({ serviceId, name, description, image, provi
   const dispatch = useDispatch();
   const { mode } = useThemeMode();
   const cartItems = useSelector((state) => state.cart.items);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [pendingService, setPendingService] = useState(null);
 
   // Check if this service is already in cart
   const isInCart = cartItems.some(item => item.serviceId === serviceId);
@@ -36,70 +34,49 @@ export default function ServiceCard({ serviceId, name, description, image, provi
       return;
     }
 
+    // Debug: Check what provider data is available
+    console.log('ServiceCard - fullService:', fullService);
+    console.log('ServiceCard - providerId prop:', providerId);
+    console.log('ServiceCard - provider prop:', provider);
+
     // If already in cart, just show message
     if (isInCart) {
       toastMessage('info', 'This service is already in your cart');
       return;
     }
 
-    // Check if cart has items from different provider
-    if (cartItems.length > 0) {
-      const currentProviderId = cartItems[0].providerId;
-      const newProviderId = fullService.providerId?.providerId;
+    // Get provider ID from multiple possible sources
+    const resolvedProviderId = 
+      fullService.providerId?.providerId || // nested object
+      fullService.providerId || // direct field
+      providerId?.providerId || // prop as object
+      providerId || // prop as direct value
+      provider?.providerId || // provider object
+      provider?.id; // provider id field
 
-      if (currentProviderId !== newProviderId) {
-        // Show dialog instead of toast
-        setPendingService(fullService);
-        setOpenDialog(true);
-        return;
-      }
-    }
+    console.log('Resolved provider ID:', resolvedProviderId);
 
     // Add service to cart
-    dispatch(addItem({
+    const cartItem = {
       serviceId: fullService.serviceId,
       serviceName: fullService.serviceName,
       description: fullService.description,
       cost: fullService.cost,
       imageUrl: fullService.imageUrl,
-      providerId: fullService.providerId?.providerId,
-      providerName: fullService.providerId?.providerName,
+      providerId: resolvedProviderId,
+      providerName: fullService.providerId?.providerName || provider?.providerName || provider?.name,
       location: fullService.location,
-    }));
+    };
+
+    console.log('Adding to cart:', cartItem);
+    dispatch(addItem(cartItem));
 
     toastMessage('success', `${fullService.serviceName} added to cart!`);
   };
 
-  const handleEmptyCartAndAdd = (e) => {
-    e.stopPropagation();
-    // Clear cart and add new service
-    dispatch(clearCart());
-    if (pendingService) {
-      dispatch(addItem({
-        serviceId: pendingService.serviceId,
-        serviceName: pendingService.serviceName,
-        description: pendingService.description,
-        cost: pendingService.cost,
-        imageUrl: pendingService.imageUrl,
-        providerId: pendingService.providerId?.providerId,
-        providerName: pendingService.providerId?.providerName,
-        location: pendingService.location,
-      }));
-      toastMessage('success', `Cart cleared. ${pendingService.serviceName} added to cart!`);
-    }
-    setOpenDialog(false);
-    setPendingService(null);
-  };
-
-  const handleCloseDialog = (e) => {
-    e.stopPropagation();
-    setOpenDialog(false);
-    setPendingService(null);
-  };
-
   const handleRemoveFromCart = (e) => {
     e.stopPropagation(); // Prevent card click
-    dispatch(removeItem((item) => item.serviceId === serviceId));
+    dispatch(removeItem(serviceId));
     toastMessage('success', 'Service removed from cart');
   };
 
@@ -262,47 +239,6 @@ export default function ServiceCard({ serviceId, name, description, image, provi
           )}
         </Box>
       </CardContent>
-
-      {/* Provider Conflict Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WarningIcon color="warning" />
-          Different Service Provider
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            You can only order services from one provider at a time.
-          </DialogContentText>
-          <DialogContentText sx={{ mt: 2, fontWeight: 600 }}>
-            Current cart: {cartItems.length > 0 && cartItems[0].providerName}
-          </DialogContentText>
-          <DialogContentText sx={{ mt: 1 }}>
-            To add this service from <strong>{pendingService?.providerId?.providerName}</strong>,
-            you need to empty your current cart first.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button
-            onClick={handleCloseDialog}
-            variant="outlined"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleEmptyCartAndAdd}
-            variant="contained"
-            color="error"
-            startIcon={<ShoppingCartIcon />}
-          >
-            Empty Cart & Add
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Card>
   );
 }

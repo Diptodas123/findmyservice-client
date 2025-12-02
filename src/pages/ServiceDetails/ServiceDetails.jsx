@@ -1,4 +1,4 @@
-import { Box, Paper, Stack, Typography, Button, Rating, Chip, FormControl, InputLabel, Select, MenuItem, Divider, Avatar, CircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Stack, Typography, Button, Rating, Chip, FormControl, InputLabel, Select, MenuItem, Divider, Avatar, CircularProgress, Alert, TextField } from '@mui/material';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
@@ -10,8 +10,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addItem as addItemAction } from '../../store/cartSlice';
 import toastMessage from '../../utils/toastMessage';
 import formatINR from '../../utils/formatCurrency';
-import apiClient from '../../utils/apiClient';
 import React, { useEffect, useState } from 'react';
+import apiClient from '../../utils/apiClient';
 
 const ServiceDetails = () => {
     const { id } = useParams();
@@ -28,22 +28,20 @@ const ServiceDetails = () => {
             try {
                 setLoading(true);
                 setError(null);
-                
+
                 // Fetch service details
-                const serviceResponse = await apiClient.get(`/api/v1/services/${id}`);
-                const serviceData = serviceResponse.data || serviceResponse;
-                
+                const serviceData = await apiClient.get(`/api/v1/services/${id}`);
+
                 if (!serviceData) {
                     throw new Error('Service not found');
                 }
-                
+
                 setService(serviceData);
-                
+
                 // Fetch provider details if providerId exists
                 if (serviceData.providerId) {
                     try {
-                        const providerResponse = await apiClient.get(`/api/v1/providers/${serviceData.providerId}`);
-                        const providerData = providerResponse.data || providerResponse;
+                        const providerData = await apiClient.get(`/api/v1/providers/${serviceData.providerId}`);
                         setProvider(providerData);
                     } catch (providerErr) {
                         console.error('Error fetching provider:', providerErr);
@@ -57,17 +55,50 @@ const ServiceDetails = () => {
                         });
                     }
                 }
-                
+
                 // Fetch reviews for the service
                 try {
-                    const reviewsResponse = await apiClient.get(`/api/v1/services/${id}/reviews`);
-                    const reviewsData = reviewsResponse.data || reviewsResponse;
-                    setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+                    const reviewsData = await apiClient.get(`/api/v1/feedbacks/service/${id}`);
+
+                    // Enrich reviews with user details
+                    const enrichedReviews = await Promise.all(
+                        (Array.isArray(reviewsData) ? reviewsData : []).map(async (review) => {
+                            try {
+                                // Fetch user details
+                                let userDetails = null;
+                                if (review.userId) {
+                                    userDetails = await apiClient.get(`/api/v1/users/${review.userId}`);
+                                }
+
+                                // Transform review data with user details
+                                return {
+                                    ...review,
+                                    user: userDetails?.name || 'Anonymous User',
+                                    image: userDetails?.profilePictureUrl || null,
+                                    createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                    comment: review.comment || review.feedback || '',
+                                    rating: review.rating || 0
+                                };
+                            } catch (error) {
+                                console.warn('Failed to enrich review:', error);
+                                return {
+                                    ...review,
+                                    user: 'Anonymous User',
+                                    image: null,
+                                    createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                    comment: review.comment || review.feedback || '',
+                                    rating: review.rating || 0
+                                };
+                            }
+                        })
+                    );
+
+                    setReviews(enrichedReviews);
                 } catch (reviewErr) {
                     console.error('Error fetching reviews:', reviewErr);
                     setReviews([]);
                 }
-                
+
             } catch (err) {
                 console.error('Error fetching service details:', err);
                 setError(err.message || 'Failed to load service details');
@@ -76,7 +107,7 @@ const ServiceDetails = () => {
                 setLoading(false);
             }
         };
-        
+
         if (id) {
             fetchServiceDetails();
         }
@@ -93,6 +124,11 @@ const ServiceDetails = () => {
     };
     const [reviewSort, setReviewSort] = React.useState('newest');
     const [expandedReviewIds, setExpandedReviewIds] = React.useState([]);
+
+    // Review form state
+    const [reviewRating, setReviewRating] = React.useState(0);
+    const [reviewComment, setReviewComment] = React.useState('');
+    const [submittingReview, setSubmittingReview] = React.useState(false);
 
     const sortedReviews = React.useMemo(() => {
         const arr = [...reviews];
@@ -112,10 +148,11 @@ const ServiceDetails = () => {
 
     const dispatch = useDispatch();
     const items = useSelector((s) => s.cart.items || []);
+    const user = useSelector((s) => s.user?.profile || null);
 
     const handleAddToCart = () => {
         if (!service) return;
-        
+
         const exists = items.find((i) => i.serviceId === service.serviceId);
         if (exists) {
             toastMessage({ msg: `${service.serviceName || service.name} is already in cart`, type: 'info' });
@@ -130,12 +167,61 @@ const ServiceDetails = () => {
             location: service.location || (provider ? `${provider.city || ''}${provider.state ? ', ' + provider.state : ''}` : ''),
             availability: service.availability,
             imageUrl: service.imageUrl,
-            providerId: service.providerId,
-            providerName: provider?.providerName,
+            providerId: service.providerId?.providerId || service.providerId || provider?.providerId || provider?.id,
+            providerName: provider?.providerName || provider?.name,
         };
 
+        console.log('ServiceDetails - Adding to cart:', payload);
         dispatch(addItemAction(payload));
         toastMessage({ msg: `${service.serviceName || service.name} added to cart`, type: 'success' });
+    };
+
+    const handleSubmitReview = async () => {
+        if (!user || !user.userId) {
+            toastMessage({ msg: 'Please log in to submit a review', type: 'error' });
+            return;
+        }
+
+        if (!reviewRating) {
+            toastMessage({ msg: 'Please select a rating', type: 'warning' });
+            return;
+        }
+
+        if (!reviewComment.trim()) {
+            toastMessage({ msg: 'Please enter a review comment', type: 'warning' });
+            return;
+        }
+
+        setSubmittingReview(true);
+        try {
+            const reviewPayload = {
+                userId: user.userId,
+                serviceId: service.serviceId,
+                providerId: service.providerId,
+                rating: reviewRating,
+                comment: reviewComment.trim(),
+                date: new Date().toISOString()
+            };
+
+            await apiClient.post('/api/v1/feedbacks', reviewPayload);
+
+            // Reset form
+            setReviewRating(0);
+            setReviewComment('');
+
+            toastMessage({ msg: 'Review submitted successfully!', type: 'success' });
+
+            // Refresh reviews
+            window.location.reload(); // Simple refresh - you could also re-fetch reviews
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            toastMessage({
+                msg: error.message || 'Failed to submit review. Please try again.',
+                type: 'error'
+            });
+        } finally {
+            setSubmittingReview(false);
+        }
     };
 
     if (loading) {
@@ -201,9 +287,57 @@ const ServiceDetails = () => {
             </Paper>
             <Box sx={{ display: 'flex', gap: 3, mt: 3, flexDirection: { xs: 'column', md: 'row' } }}>
                 <Box sx={{ flex: 1 }}>
+                    {/* Add Review Form */}
+                    <Paper sx={{ p: 3, mb: 3 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Write a Review</Typography>
+                        <Stack spacing={2}>
+                            <Box>
+                                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Rating *</Typography>
+                                <Rating
+                                    value={reviewRating}
+                                    onChange={(event, newValue) => setReviewRating(newValue)}
+                                    size="large"
+                                    precision={1}
+                                />
+                            </Box>
+                            <Box>
+                                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Comment *</Typography>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={4}
+                                    placeholder="Share your experience with this service..."
+                                    value={reviewComment}
+                                    onChange={(e) => setReviewComment(e.target.value)}
+                                    variant="outlined"
+                                    disabled={submittingReview}
+                                />
+                            </Box>
+                            <Box>
+                                <Button
+                                    variant="contained"
+                                    onClick={handleSubmitReview}
+                                    disabled={submittingReview || !reviewRating || !reviewComment.trim()}
+                                    sx={{ px: 3, py: 1 }}
+                                >
+                                    {submittingReview ? (
+                                        <>
+                                            <CircularProgress size={16} sx={{ mr: 1 }} />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        'Submit Review'
+                                    )}
+                                </Button>
+                            </Box>
+                        </Stack>
+                    </Paper>
+
+                    {/* Reviews List */}
+                    {/* Reviews List */}
                     <Paper sx={{ p: 2 }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>Reviews</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>Customer Reviews ({reviews.length})</Typography>
                             <FormControl size="small" sx={{ minWidth: 140 }}>
                                 <InputLabel id="sd-review-sort">Sort</InputLabel>
                                 <Select labelId="sd-review-sort" label="Sort" value={reviewSort} onChange={(e) => setReviewSort(e.target.value)}>

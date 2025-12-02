@@ -36,7 +36,7 @@ import ContactCard from './ContactCard';
 
 const ServiceProviderDetails = () => {
     console.log('Rendering ServiceProviderDetails component');
-    
+
     const params = useParams();
     // Route may provide either `id` or `providerId` depending on routing usage.
     const providerId = params.providerId || params.id;
@@ -58,9 +58,8 @@ const ServiceProviderDetails = () => {
             setLoading(true);
             try {
                 // Fetch provider details from API
-                const response = await apiClient.get(`/api/v1/providers/${providerId}`);
-                const providerData = response.data || response;
-                
+                const providerData = await apiClient.get(`/api/v1/providers/${providerId}`);
+
                 console.log('Provider data:', providerData);
                 if (!providerData) {
                     toastMessage({ msg: 'Provider not found', type: 'error' });
@@ -68,22 +67,54 @@ const ServiceProviderDetails = () => {
                     return;
                 }
                 setProvider(providerData);
-                
+
                 // Fetch services for this provider
                 try {
-                    const servicesResponse = await apiClient.get(`/api/v1/services/provider/${providerId}`);
-                    const servicesData = servicesResponse.data || servicesResponse;
+                    const servicesData = await apiClient.get(`/api/v1/services/provider/${providerId}`);
                     setServices(Array.isArray(servicesData) ? servicesData : []);
                 } catch (serviceError) {
                     console.error('Error fetching services:', serviceError);
                     setServices([]);
                 }
-                
+
                 // Fetch reviews for this provider
                 try {
-                    const reviewsResponse = await apiClient.get(`/api/v1/providers/${providerId}/reviews`);
-                    const reviewsData = reviewsResponse.data || reviewsResponse;
-                    setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+                    const reviewsData = await apiClient.get(`/api/v1/feedbacks/provider/${providerId}`);
+
+                    // Enrich reviews with user details
+                    const enrichedReviews = await Promise.all(
+                        (Array.isArray(reviewsData) ? reviewsData : []).map(async (review) => {
+                            try {
+                                // Fetch user details
+                                let userDetails = null;
+                                if (review.userId) {
+                                    userDetails = await apiClient.get(`/api/v1/users/${review.userId}`);
+                                }
+
+                                // Transform review data with user details
+                                return {
+                                    ...review,
+                                    user: userDetails?.name || 'Anonymous User',
+                                    image: userDetails?.profilePictureUrl || null,
+                                    createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                    comment: review.comment || review.feedback || '',
+                                    rating: review.rating || 0
+                                };
+                            } catch (error) {
+                                console.warn('Failed to enrich review:', error);
+                                return {
+                                    ...review,
+                                    user: 'Anonymous User',
+                                    image: null,
+                                    createdAt: review.createdAt || review.date || new Date().toISOString(),
+                                    comment: review.comment || review.feedback || '',
+                                    rating: review.rating || 0
+                                };
+                            }
+                        })
+                    );
+
+                    setReviews(enrichedReviews);
                 } catch (reviewError) {
                     console.error('Error fetching reviews:', reviewError);
                     setReviews([]);
@@ -96,13 +127,11 @@ const ServiceProviderDetails = () => {
                 setLoading(false);
             }
         };
-        
+
         if (providerId) {
             fetchProviderDetails();
         }
-    }, [providerId, navigate]);
-
-    const scrollTo = (ref) => {
+    }, [providerId, navigate]); const scrollTo = (ref) => {
         if (ref && ref.current) {
             ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -127,7 +156,7 @@ const ServiceProviderDetails = () => {
             setCurrentIndex((i) => (i + 1) % provider.imageUrls.length);
         }
     }, [provider]);
-    
+
     const prevImage = useCallback(() => {
         if (provider?.imageUrls) {
             setCurrentIndex((i) => (i - 1 + provider.imageUrls.length) % provider.imageUrls.length);
@@ -202,11 +231,11 @@ const ServiceProviderDetails = () => {
             });
         }
     };
-    
+
     if (!provider && !loading) {
         return null;
     }
-    
+
     return (
         <>
             <Box sx={{ p: { xs: 1, md: 4 }, mt: 10, maxWidth: 1200, mx: 'auto' }}>
