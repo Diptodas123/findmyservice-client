@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ServiceGrid from '../ServiceGrid/ServiceGrid';
 import { searchByCategory } from '../../utils/searchNavigation';
 import apiClient from '../../utils/apiClient';
+import { useSelector } from 'react-redux';
 
 const RecommendedServices = () => {
 
@@ -11,6 +12,7 @@ const RecommendedServices = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const defaultImageUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvwrZoNvnxGJhZgUhZy7v_T2fHzrlbF6vMiQ&s';
+    const userDetails = useSelector((state) => state.user.profile);
 
     // Fetch services and extract categories
     useEffect(() => {
@@ -52,7 +54,7 @@ const RecommendedServices = () => {
         <section className="recommended-services" style={{ padding: "2rem 1rem" }}>
             <div className="container">
                 <Typography variant="h5" component="h2" gutterBottom>
-                    User, what services are you looking for today?
+                    {userDetails?.name?.split(' ')[0]}, what services are you looking for today?
                 </Typography>
                 
                 {loading ? (

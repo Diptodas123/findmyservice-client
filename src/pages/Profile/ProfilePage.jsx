@@ -308,9 +308,11 @@ const ProfilePage = () => {
 
     const handleReorderServices = (order) => {
     const lineItems = order.lineItemDTOS;
-    const orderProvider = order.providerId;
+    const hasLineItems = lineItems && lineItems.length > 0;
+    const hasSingleService = order.serviceId && order.serviceName;
     
-    if (!lineItems || lineItems.length === 0) {
+    // Check if order has either line items or single service
+    if (!hasLineItems && !hasSingleService) {
       showPopup('No services to reorder', 'error');
       return;
     }
@@ -318,7 +320,7 @@ const ProfilePage = () => {
     // Check for provider conflicts
     if (cartItems.length > 0) {
       const currentCartProviderName = cartItems[0].providerName || cartItems[0].providerId;
-      const orderProviderName = orderProvider?.providerName || orderProvider?.providerId;
+      const orderProviderName = order.providerData?.providerName || order.providerId;
       
       if (currentCartProviderName && orderProviderName && currentCartProviderName !== orderProviderName) {
         // Show Material-UI Dialog for provider conflict
@@ -335,39 +337,63 @@ const ProfilePage = () => {
 
   const executeReorder = (order) => {
     const lineItems = order.lineItemDTOS;
-    const orderProvider = order.providerId;
+    const hasLineItems = lineItems && lineItems.length > 0;
 
     try {
       // Clear current cart (either due to conflict or to start fresh)
       dispatch(clearCart());
       
-      // Add each service from the order to cart
-      for (const lineItem of lineItems) {
-        // Transform lineItem to cart item format
+      if (hasLineItems) {
+        // Handle multiple services (lineItemDTOS)
+        for (const lineItem of lineItems) {
+          const cartItem = {
+            serviceId: lineItem.lineItemId,
+            serviceName: lineItem.serviceName,
+            cost: lineItem.cost,
+            imageUrl: lineItem.imageUrl,
+            providerId: order.providerId || null,
+            providerName: order.providerData?.providerName || 'Unknown Provider',
+            location: null,
+            availability: 'Available',
+            description: `Reordered: ${lineItem.serviceName}`,
+            avgRating: 4.5,
+            quantityUnits: lineItem.quantityUnits || 1
+          };
+          
+          dispatch(addItem(cartItem));
+        }
+
+        const serviceCount = lineItems.length;
+        const providerName = order.providerData?.providerName || 'provider';
+        
+        showPopup(
+          `${serviceCount} service${serviceCount > 1 ? 's' : ''} from ${providerName} added to cart!`,
+          'success'
+        );
+      } else {
+        // Handle single service order (API response format)
         const cartItem = {
-          serviceId: lineItem.lineItemId, // Use lineItemId as serviceId
-          serviceName: lineItem.serviceName,
-          cost: lineItem.cost,
-          imageUrl: lineItem.imageUrl,
-          providerId: orderProvider?.providerId || null,
-          providerName: orderProvider?.providerName || 'Unknown Provider',
+          serviceId: order.serviceId,
+          serviceName: order.serviceName,
+          cost: order.totalCost,
+          imageUrl: null, // May not be available in order response
+          providerId: order.providerId,
+          providerName: order.providerData?.providerName || 'Unknown Provider',
           location: null,
           availability: 'Available',
-          description: `Reordered: ${lineItem.serviceName}`,
-          avgRating: 4.5, // Default rating for reordered items
-          quantityUnits: lineItem.quantityUnits || 1
+          description: `Reordered: ${order.serviceName}`,
+          avgRating: 4.5,
+          quantityUnits: order.quantity || 1
         };
         
         dispatch(addItem(cartItem));
+        
+        const providerName = order.providerData?.providerName || 'provider';
+        showPopup(
+          `${order.serviceName} from ${providerName} added to cart!`,
+          'success'
+        );
       }
-
-      const serviceCount = lineItems.length;
-      const providerName = orderProvider?.providerName || 'provider';
-      
-      showPopup(
-        `${serviceCount} service${serviceCount > 1 ? 's' : ''} from ${providerName} added to cart!`,
-        'success'
-      );
       
     } catch (error) {
       console.error('Error reordering services:', error);
@@ -954,7 +980,7 @@ const ProfilePage = () => {
             mt: 1,
             color: theme.palette.text.secondary
           }}>
-            To reorder services from <strong>{conflictOrder?.providerId?.providerName}</strong>, 
+            To reorder services from <strong>{conflictOrder?.providerData?.providerName || 'this provider'}</strong>, 
             your current cart will be cleared first.
           </DialogContentText>
         </DialogContent>

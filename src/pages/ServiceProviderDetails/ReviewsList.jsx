@@ -1,17 +1,36 @@
 import React from 'react';
-import { Paper, Stack, Avatar, Tooltip, Box, Typography, Rating, Button } from '@mui/material';
-import { Person as PersonIcon } from '@mui/icons-material';
+import { Paper, Stack, Avatar, Box, Typography, Rating, Button } from '@mui/material';
+import { Person as PersonIcon, RateReview } from '@mui/icons-material';
 
 const ReviewsList = ({ reviews = [], expandedReviewIds = [], toggleExpand }) => {
+    if (!reviews || reviews.length === 0) {
+        return (
+            <Paper
+                elevation={0}
+                sx={{
+                    p: 6,
+                    textAlign: 'center',
+                    bgcolor: 'grey.50',
+                    borderRadius: 2
+                }}
+            >
+                <RateReview sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No Reviews Yet
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    Be the first to share your experience with this service provider!
+                </Typography>
+            </Paper>
+        );
+    }
 
     return (
         <Stack spacing={2}>
-                {reviews.map((review, id) => (
+            {reviews.map((review, id) => (
                 <Paper key={id} sx={{ p: 2 }} elevation={0}>
                     <Stack direction="row" spacing={2} alignItems="flex-start">
-                        <Tooltip title={`View ${review.user} profile`}>
-                            <Avatar src={review.image} alt={review.user} sx={{ width: 56, height: 56, cursor: 'pointer' }} />
-                        </Tooltip>
+                        <Avatar src={review.image} alt={review.user} sx={{ width: 56, height: 56 }} />
                         <Box sx={{ flex: 1 }}>
                             <Stack direction="row" justifyContent="space-between" alignItems="center">
                                 <Box>

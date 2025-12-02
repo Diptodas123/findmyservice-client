@@ -289,7 +289,17 @@ const Cart = () => {
                                     variant="contained"
                                     size="large"
                                     startIcon={loading ? <CircularProgress size={20} /> : <ShoppingBagIcon />}
-                                    onClick={() => setCheckoutOpen(true)}
+                                    onClick={() => {
+                                        const token = localStorage.getItem('token');
+                                        if (!token || !user.userId) {
+                                            toastMessage({ 
+                                                msg: 'Please log in to proceed with checkout', 
+                                                type: 'error' 
+                                            });
+                                            return;
+                                        }
+                                        setCheckoutOpen(true);
+                                    }}
                                     disabled={loading}
                                     sx={{
                                         py: 1.5,

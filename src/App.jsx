@@ -40,6 +40,7 @@ function InnerApp({ userRole }) {
               <Route path='/service-details/:id' element={<ServiceDetails />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Box>
@@ -51,8 +52,6 @@ function InnerApp({ userRole }) {
           <Route path="/search" element={<Search />} />
           <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
           <Route path='/service-details/:id' element={<ServiceDetails />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/contact" element={<Contact />} />
           <Route path='*' element={<NotFound />} />
         </Routes>
       )}
@@ -65,9 +64,9 @@ function InnerApp({ userRole }) {
 function App() {
   const userProfile = useSelector((state) => state.user?.profile);
   const providerProfile = useSelector((state) => state.provider?.profile);
-  
-  const userRole = providerProfile?.providerId 
-    ? 'PROVIDER' 
+
+  const userRole = providerProfile?.providerId
+    ? 'PROVIDER'
     : userProfile?.role || 'USER';
 
   return (
