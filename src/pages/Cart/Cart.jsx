@@ -13,16 +13,18 @@ import {
     DialogContent,
     DialogActions,
     CircularProgress,
+    TextField,
 } from '@mui/material';
 import {
     Delete as DeleteIcon,
     Edit as EditIcon,
     ShoppingBag as ShoppingBagIcon,
     ClearAll as ClearAllIcon,
-    ShoppingCartRounded as ShoppingCartRoundedIcon
+    ShoppingCartRounded as ShoppingCartRoundedIcon,
+    CalendarToday as CalendarTodayIcon
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
-import { removeItem, clearCart } from '../../store/cartSlice';
+import { removeItem, clearCart, updateRequestedDate } from '../../store/cartSlice';
 import formatINR from '../../utils/formatCurrency';
 import toastMessage from '../../utils/toastMessage';
 import apiClient from '../../utils/apiClient';
@@ -57,6 +59,16 @@ const Cart = () => {
     const [clearCartOpen, setClearCartOpen] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
 
+    const handleRequestedDateChange = (serviceId, date) => {
+        dispatch(updateRequestedDate({ serviceId, requestedDate: date }));
+    };
+
+    const getTomorrowDate = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
+    };
+
     const handleConfirm = async () => {
         if (!user.name || !user.phone) {
             return toastMessage({ msg: 'Please set your name and phone in your profile before proceeding', type: 'warning' });
@@ -76,6 +88,15 @@ const Cart = () => {
             });
         }
 
+        // Check if all items have requested dates
+        const itemsWithoutDate = items.filter(item => !item.requestedDate);
+        if (itemsWithoutDate.length > 0) {
+            return toastMessage({ 
+                msg: `Please select a requested date for all services before proceeding.`, 
+                type: 'warning' 
+            });
+        }
+
         setLoading(true);
         try {
             // Transform cart items to the specified payload format
@@ -83,7 +104,7 @@ const Cart = () => {
                 userId: user.userId,
                 providerId: item.providerId,
                 serviceId: item.serviceId,
-                requestedDate: new Date().toISOString(),
+                requestedDate: item.requestedDate || new Date().toISOString(),
             }));
 
             console.log('Checkout payload:', orderPayload);
@@ -201,9 +222,45 @@ const Cart = () => {
                                                 >
                                                     {it.description}
                                                 </Typography>
-                                                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600, mt: 0.5 }}>
+                                                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600, mb: 1.5 }}>
                                                     Provider ID: {it.providerId || 'Unknown'}
                                                 </Typography>
+                                                
+                                                {/* Requested Date Picker */}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                                    <CalendarTodayIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                                    <TextField
+                                                        type="date"
+                                                        label="Requested Date"
+                                                        size="small"
+                                                        value={it.requestedDate ? it.requestedDate.split('T')[0] : ''}
+                                                        onChange={(e) => {
+                                                            const selectedDate = e.target.value;
+                                                            if (selectedDate) {
+                                                                const isoDate = new Date(selectedDate + 'T09:00:00').toISOString();
+                                                                handleRequestedDateChange(it.serviceId, isoDate);
+                                                            }
+                                                        }}
+                                                        inputProps={{
+                                                            min: getTomorrowDate()
+                                                        }}
+                                                        sx={{ 
+                                                            '& .MuiOutlinedInput-root': {
+                                                                height: '32px',
+                                                                fontSize: '0.875rem'
+                                                            },
+                                                            '& .MuiInputLabel-root': {
+                                                                fontSize: '0.75rem',
+                                                                transform: 'translate(14px, -9px) scale(0.75)',
+                                                                backgroundColor: 'white',
+                                                                paddingX: '4px'
+                                                            },
+                                                            '& .MuiInputLabel-shrink': {
+                                                                transform: 'translate(14px, -14px) scale(0.75)'
+                                                            }
+                                                        }}
+                                                    />
+                                                </Box>
                                             </Box>
                                         </Stack>
 
@@ -289,7 +346,17 @@ const Cart = () => {
                                     variant="contained"
                                     size="large"
                                     startIcon={loading ? <CircularProgress size={20} /> : <ShoppingBagIcon />}
-                                    onClick={() => setCheckoutOpen(true)}
+                                    onClick={() => {
+                                        const token = localStorage.getItem('token');
+                                        if (!token || !user.userId) {
+                                            toastMessage({ 
+                                                msg: 'Please log in to proceed with checkout', 
+                                                type: 'error' 
+                                            });
+                                            return;
+                                        }
+                                        setCheckoutOpen(true);
+                                    }}
                                     disabled={loading}
                                     sx={{
                                         py: 1.5,

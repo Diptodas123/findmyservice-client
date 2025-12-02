@@ -33,7 +33,6 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  Visibility as VisibilityIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   Done as DoneIcon,
@@ -45,6 +44,7 @@ import {
   AccessTime as AccessTimeIcon,
   AttachMoney as AttachMoneyIcon,
   Refresh as RefreshIcon,
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import apiClient from '../../utils/apiClient';
 import toastMessage from '../../utils/toastMessage';
@@ -75,6 +75,7 @@ const BookingsList = ({ provider }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuBookingId, setMenuBookingId] = useState(null);
+  const [scheduledDate, setScheduledDate] = useState('');
 
   // Fetch bookings when component mounts or provider changes
   useEffect(() => {
@@ -162,7 +163,7 @@ const BookingsList = ({ provider }) => {
               paymentStatus: order.orderStatus || 'REQUESTED',
               amount: order.totalCost || 0,
               quantity: order.quantity || 1,
-              scheduledDate: order.scheduledDate || order.requestedDate || new Date().toISOString(),
+              scheduledDate: order.scheduledDate || null, // Only use actual scheduled date, not fallback
               scheduledTime: order.scheduledDate ? new Date(order.scheduledDate).toLocaleTimeString('en-US', { 
                 hour: 'numeric', 
                 minute: '2-digit', 
@@ -197,7 +198,7 @@ const BookingsList = ({ provider }) => {
               paymentStatus: order.orderStatus || 'REQUESTED',
               amount: order.totalCost || 0,
               quantity: order.quantity || 1,
-              scheduledDate: order.scheduledDate || order.requestedDate || new Date().toISOString(),
+              scheduledDate: order.scheduledDate || null, // Only use actual scheduled date, not fallback
               scheduledTime: 'TBD',
               createdAt: order.createdAt || new Date().toISOString(),
               completedAt: null,
@@ -238,25 +239,38 @@ const BookingsList = ({ provider }) => {
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
     setDetailsOpen(true);
+    // Reset scheduled date when opening details
+    setScheduledDate('');
   };
 
   const handleCloseDetails = () => {
     setDetailsOpen(false);
     setSelectedBooking(null);
+    setScheduledDate('');
   };
 
-  const updateBookingStatus = async (bookingId, newStatus) => {
+  const updateBookingStatus = async (bookingId, newStatus, scheduledDateTime = null) => {
     setUpdating(true);
     try {
+      const requestBody = {
+        orderStatus: newStatus
+      };
+      
+      // Include scheduled date if provided (when updating to SCHEDULED status)
+      if (newStatus === 'SCHEDULED' && scheduledDateTime) {
+        // Convert date to ISO instant format for backend
+        const scheduledDate = new Date(scheduledDateTime);
+        scheduledDate.setHours(9, 0, 0, 0); // Set to 9:00 AM as default time
+        requestBody.scheduledDate = scheduledDate.toISOString();
+      }
+
       const response = await fetch(`http://localhost:8080/api/v1/orders/${bookingId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          orderStatus: newStatus
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -272,6 +286,7 @@ const BookingsList = ({ provider }) => {
             ...b, 
             status: newStatus, 
             paymentStatus: newStatus,
+            scheduledDate: newStatus === 'SCHEDULED' && scheduledDateTime ? scheduledDateTime : b.scheduledDate,
             completedAt: newStatus === 'COMPLETED' ? new Date().toISOString() : b.completedAt,
             cancelledAt: newStatus === 'CANCELLED' ? new Date().toISOString() : b.cancelledAt
           } : b
@@ -279,17 +294,41 @@ const BookingsList = ({ provider }) => {
       );
       
       toastMessage({ msg: `Booking ${newStatus.toLowerCase()} successfully`, type: 'success' });
+      return true; // Return success
     } catch (error) {
       console.error('Error updating booking status:', error);
       toastMessage({ msg: 'Failed to update booking status. Please try again.', type: 'error' });
+      throw error; // Re-throw error so handleConfirm can catch it
     } finally {
       setUpdating(false);
     }
   };
 
-  const handleConfirm = (bookingId) => {
-    updateBookingStatus(bookingId, 'SCHEDULED');
-    handleCloseMenu();
+  const handleConfirm = async (bookingId) => {
+    if (!scheduledDate) {
+      toastMessage({ msg: 'Please select a scheduled date before confirming the booking', type: 'error' });
+      return;
+    }
+    
+    // Validate that scheduled date is not in the past
+    const selectedDate = new Date(scheduledDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      toastMessage({ msg: 'Scheduled date cannot be in the past', type: 'error' });
+      return;
+    }
+    
+    try {
+      await updateBookingStatus(bookingId, 'SCHEDULED', scheduledDate);
+      handleCloseMenu();
+      handleCloseDetails(); // Close dialog on success
+      setScheduledDate(''); // Reset the scheduled date
+    } catch (error) {
+      // Don't close dialog on error so user can try again
+      console.error('Error confirming booking:', error);
+    }
   };
 
   const handleComplete = (bookingId) => {
@@ -460,7 +499,6 @@ const BookingsList = ({ provider }) => {
                 <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Payment</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -492,9 +530,8 @@ const BookingsList = ({ provider }) => {
                     <Typography variant="body2">{booking.serviceName || 'Unknown Service'}</Typography>
                   </TableCell>
                   <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
-                    <Typography variant="body2">{formatDate(booking.scheduledDate)}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {booking.scheduledTime || 'TBD'}
+                    <Typography variant="body2">
+                      {booking.scheduledDate ? formatDate(booking.scheduledDate) : 'Not Scheduled'}
                     </Typography>
                   </TableCell>
                   <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
@@ -512,18 +549,6 @@ const BookingsList = ({ provider }) => {
                   </TableCell>
                   <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
                     {getPaymentChip(booking.paymentStatus)}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenMenu(e, booking.orderId);
-                      }}
-                      disabled={updating}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -627,24 +652,24 @@ const BookingsList = ({ provider }) => {
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {selectedBooking.serviceName || 'Unknown Service'}
                     </Typography>
-                    {selectedBooking.serviceCategory && (
-                      <Typography variant="caption" color="text.secondary">
-                        Category: {selectedBooking.serviceCategory}
-                      </Typography>
-                    )}
-                    {selectedBooking.serviceDescription && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                        {selectedBooking.serviceDescription}
-                      </Typography>
-                    )}
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarTodayIcon fontSize="small" color="action" />
-                    <Typography variant="body2">{formatDate(selectedBooking.scheduledDate)}</Typography>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      Requested Date:
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                      <CalendarTodayIcon fontSize="small" color="action" />
+                      <Typography variant="body2">{formatDate(selectedBooking.originalOrder?.requestedDate || selectedBooking.createdAt)}</Typography>
+                    </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AccessTimeIcon fontSize="small" color="action" />
-                    <Typography variant="body2">{selectedBooking.scheduledTime || 'TBD'}</Typography>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                      Scheduled Date:
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                      <AccessTimeIcon fontSize="small" color="action" />
+                      <Typography variant="body2">{selectedBooking.scheduledDate ? formatDate(selectedBooking.scheduledDate) : 'Not Scheduled'}</Typography>
+                    </Box>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AttachMoneyIcon fontSize="small" color="action" />
@@ -673,6 +698,58 @@ const BookingsList = ({ provider }) => {
                 </Typography>
                 <Box>{getStatusChip(selectedBooking.status)}</Box>
               </Grid>
+
+              {/* Scheduled Date Picker - Only show for REQUESTED bookings */}
+              {selectedBooking?.status === 'REQUESTED' && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Scheduled Date"
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    InputLabelProps={{
+                      shrink: true,
+                      style: {
+                        backgroundColor: 'white',
+                        paddingLeft: '4px',
+                        paddingRight: '4px',
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <ScheduleIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                      ),
+                    }}
+                    inputProps={{
+                      min: new Date().toISOString().split('T')[0], // Prevent past dates
+                    }}
+                    helperText="Select a date when you will provide the service"
+                    sx={{
+                      '& .MuiInputLabel-root': {
+                        backgroundColor: 'white',
+                        paddingX: 1,
+                      }
+                    }}
+                  />
+                </Grid>
+              )}
+
+              {/* Show scheduled date for non-REQUESTED bookings */}
+              {selectedBooking?.status !== 'REQUESTED' && selectedBooking?.scheduledDate && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Scheduled Date
+                  </Typography>
+                  <Typography variant="body2">
+                    {new Date(selectedBooking.scheduledDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </Typography>
+                </Grid>
+              )}
 
               {selectedBooking.notes && (
                 <Grid item xs={12}>
@@ -719,10 +796,7 @@ const BookingsList = ({ provider }) => {
         <DialogActions>
           {selectedBooking?.status === 'REQUESTED' && (
             <Button
-              onClick={() => {
-                handleConfirm(selectedBooking.orderId);
-                handleCloseDetails();
-              }}
+              onClick={() => handleConfirm(selectedBooking.orderId)}
               variant="contained"
               color="info"
               startIcon={<CheckCircleIcon />}

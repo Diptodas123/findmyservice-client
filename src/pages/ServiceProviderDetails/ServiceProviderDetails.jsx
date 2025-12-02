@@ -399,22 +399,24 @@ const ServiceProviderDetails = () => {
                                     </>
                                 ) : (
                                     <>
-                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                                            <FormControl size="small" sx={{ minWidth: 160 }}>
-                                                <InputLabel id="review-sort-label">Sort</InputLabel>
-                                                <Select
-                                                    labelId="review-sort-label"
-                                                    value={reviewSort}
-                                                    label="Sort"
-                                                    onChange={(e) => setReviewSort(e.target.value)}
-                                                >
-                                                    <MenuItem value="newest">Newest</MenuItem>
-                                                    <MenuItem value="oldest">Oldest</MenuItem>
-                                                    <MenuItem value="highest">Highest Rating</MenuItem>
-                                                    <MenuItem value="lowest">Lowest Rating</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Box>
+                                        {reviews.length > 0 && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                                                <FormControl size="small" sx={{ minWidth: 160 }}>
+                                                    <InputLabel id="review-sort-label">Sort</InputLabel>
+                                                    <Select
+                                                        labelId="review-sort-label"
+                                                        value={reviewSort}
+                                                        label="Sort"
+                                                        onChange={(e) => setReviewSort(e.target.value)}
+                                                    >
+                                                        <MenuItem value="newest">Newest</MenuItem>
+                                                        <MenuItem value="oldest">Oldest</MenuItem>
+                                                        <MenuItem value="highest">Highest Rating</MenuItem>
+                                                        <MenuItem value="lowest">Lowest Rating</MenuItem>
+                                                    </Select>
+                                                </FormControl>
+                                            </Box>
+                                        )}
                                         <ReviewsList
                                             reviews={sortedReviews}
                                             expandedReviewIds={expandedReviewIds}

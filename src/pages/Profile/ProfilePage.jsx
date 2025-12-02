@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import ProfileSidebar from './ProfileSidebar.jsx';
 import { toast } from 'react-toastify';
-import { addItem, clearCart } from '../../store/cartSlice';
+import { addItem } from '../../store/cartSlice';
 import {
   Box,
   Container,
@@ -57,9 +57,7 @@ const ProfilePage = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   
   // Dialog state for reorder conflicts
-  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
-  const [conflictOrder, setConflictOrder] = useState(null);
-  const [currentCartProvider, setCurrentCartProvider] = useState('');
+
   
   // Popup dialog state
   const [popupOpen, setPopupOpen] = useState(false);
@@ -308,66 +306,77 @@ const ProfilePage = () => {
 
     const handleReorderServices = (order) => {
     const lineItems = order.lineItemDTOS;
-    const orderProvider = order.providerId;
+    const hasLineItems = lineItems && lineItems.length > 0;
+    const hasSingleService = order.serviceId && order.serviceName;
     
-    if (!lineItems || lineItems.length === 0) {
+    // Check if order has either line items or single service
+    if (!hasLineItems && !hasSingleService) {
       showPopup('No services to reorder', 'error');
       return;
     }
 
-    // Check for provider conflicts
-    if (cartItems.length > 0) {
-      const currentCartProviderName = cartItems[0].providerName || cartItems[0].providerId;
-      const orderProviderName = orderProvider?.providerName || orderProvider?.providerId;
-      
-      if (currentCartProviderName && orderProviderName && currentCartProviderName !== orderProviderName) {
-        // Show Material-UI Dialog for provider conflict
-        setCurrentCartProvider(currentCartProviderName);
-        setConflictOrder(order);
-        setConflictDialogOpen(true);
-        return;
-      }
-    }
-
-    // Proceed with reorder if no conflicts
+    // Proceed with reorder (no provider restrictions)
     executeReorder(order);
   };
 
   const executeReorder = (order) => {
     const lineItems = order.lineItemDTOS;
-    const orderProvider = order.providerId;
+    const hasLineItems = lineItems && lineItems.length > 0;
 
     try {
-      // Clear current cart (either due to conflict or to start fresh)
-      dispatch(clearCart());
+      // Add services to existing cart (no clearing needed)
       
-      // Add each service from the order to cart
-      for (const lineItem of lineItems) {
-        // Transform lineItem to cart item format
+      if (hasLineItems) {
+        // Handle multiple services (lineItemDTOS)
+        for (const lineItem of lineItems) {
+          const cartItem = {
+            serviceId: lineItem.lineItemId,
+            serviceName: lineItem.serviceName,
+            cost: lineItem.cost,
+            imageUrl: lineItem.imageUrl,
+            providerId: order.providerId || null,
+            providerName: order.providerData?.providerName || 'Unknown Provider',
+            location: null,
+            availability: 'Available',
+            description: `Reordered: ${lineItem.serviceName}`,
+            avgRating: 4.5,
+            quantityUnits: lineItem.quantityUnits || 1
+          };
+          
+          dispatch(addItem(cartItem));
+        }
+
+        const serviceCount = lineItems.length;
+        const providerName = order.providerData?.providerName || 'provider';
+        
+        showPopup(
+          `${serviceCount} service${serviceCount > 1 ? 's' : ''} from ${providerName} added to cart!`,
+          'success'
+        );
+      } else {
+        // Handle single service order (API response format)
         const cartItem = {
-          serviceId: lineItem.lineItemId, // Use lineItemId as serviceId
-          serviceName: lineItem.serviceName,
-          cost: lineItem.cost,
-          imageUrl: lineItem.imageUrl,
-          providerId: orderProvider?.providerId || null,
-          providerName: orderProvider?.providerName || 'Unknown Provider',
+          serviceId: order.serviceId,
+          serviceName: order.serviceName,
+          cost: order.totalCost,
+          imageUrl: null, // May not be available in order response
+          providerId: order.providerId,
+          providerName: order.providerData?.providerName || 'Unknown Provider',
           location: null,
           availability: 'Available',
-          description: `Reordered: ${lineItem.serviceName}`,
-          avgRating: 4.5, // Default rating for reordered items
-          quantityUnits: lineItem.quantityUnits || 1
+          description: `Reordered: ${order.serviceName}`,
+          avgRating: 4.5,
+          quantityUnits: order.quantity || 1
         };
         
         dispatch(addItem(cartItem));
+        
+        const providerName = order.providerData?.providerName || 'provider';
+        showPopup(
+          `${order.serviceName} from ${providerName} added to cart!`,
+          'success'
+        );
       }
-
-      const serviceCount = lineItems.length;
-      const providerName = orderProvider?.providerName || 'provider';
-      
-      showPopup(
-        `${serviceCount} service${serviceCount > 1 ? 's' : ''} from ${providerName} added to cart!`,
-        'success'
-      );
       
     } catch (error) {
       console.error('Error reordering services:', error);
@@ -375,16 +384,7 @@ const ProfilePage = () => {
     }
   };
 
-  const handleConfirmReorder = () => {
-    setConflictDialogOpen(false);
-    executeReorder(conflictOrder);
-  };
 
-  const handleCancelReorder = () => {
-    setConflictDialogOpen(false);
-    setConflictOrder(null);
-    setCurrentCartProvider('');
-  };
 
   const validatePasswordStrength = (password) => {
     return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/.test(password);
@@ -758,9 +758,9 @@ const ProfilePage = () => {
                     borderColor: 'divider'
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">
-                      {formatDate(order.createdAt)}
+                      Order placed: {formatDate(order.createdAt)}
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1.5}>
                       <Typography variant="body1" fontWeight="600" color="primary.main">
@@ -775,6 +775,26 @@ const ProfilePage = () => {
                         sx={{ fontWeight: 500 }}
                       />
                     </Box>
+                  </Box>
+                  
+                  {/* Order Timeline Dates */}
+                  <Box display="flex" gap={3} sx={{ mt: 1 }}>
+                    {order.requestedDate && (
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <CalendarToday sx={{ fontSize: 14, color: 'text.secondary' }} />
+                        <Typography variant="caption" color="text.secondary">
+                          Requested: {formatDate(order.requestedDate)}
+                        </Typography>
+                      </Box>
+                    )}
+                    {order.scheduledDate && (
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <Schedule sx={{ fontSize: 14, color: 'primary.main' }} />
+                        <Typography variant="caption" color="primary.main" fontWeight="500">
+                          Scheduled: {formatDate(order.scheduledDate)}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </Box>
 
@@ -915,75 +935,7 @@ const ProfilePage = () => {
         </Stack>
       </Container>
       
-      {/* Provider Conflict Dialog */}
-      <Dialog
-        open={conflictDialogOpen}
-        onClose={handleCancelReorder}
-        maxWidth="sm"
-        fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'background.paper',
-              borderRadius: 2
-            }
-          }
-        }}
-      >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 1,
-          color: theme.palette.mode === 'dark' ? 'warning.light' : 'warning.main'
-        }}>
-          <WarningIcon color="warning" />
-          Different Service Provider
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: theme.palette.text.primary }}>
-            You can only order services from one provider at a time.
-          </DialogContentText>
-          <DialogContentText sx={{ 
-            mt: 2, 
-            fontWeight: 600,
-            color: theme.palette.text.primary
-          }}>
-            Current cart: {currentCartProvider}
-          </DialogContentText>
-          <DialogContentText sx={{ 
-            mt: 1,
-            color: theme.palette.text.secondary
-          }}>
-            To reorder services from <strong>{conflictOrder?.providerId?.providerName}</strong>, 
-            your current cart will be cleared first.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button 
-            onClick={handleCancelReorder}
-            variant="outlined"
-            sx={{
-              borderColor: theme.palette.mode === 'dark' ? 'grey.600' : 'grey.400',
-              color: theme.palette.text.primary
-            }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirmReorder}
-            variant="contained"
-            color="warning"
-            sx={{
-              bgcolor: theme.palette.mode === 'dark' ? 'warning.dark' : 'warning.main',
-              '&:hover': {
-                bgcolor: theme.palette.mode === 'dark' ? 'warning.main' : 'warning.dark'
-              }
-            }}
-          >
-            Clear Cart & Reorder
-          </Button>
-        </DialogActions>
-      </Dialog>
+
 
       {/* Success/Error Popup Dialog */}
       <Dialog

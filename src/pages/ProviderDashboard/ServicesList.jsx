@@ -70,6 +70,7 @@ const ServicesList = ({ provider }) => {
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [viewingService, setViewingService] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     let mounted = true;
@@ -125,6 +126,7 @@ const ServicesList = ({ provider }) => {
     setEditMode(false);
     setEditingServiceId(null);
     setForm({ name: '', description: '', cost: '', location: '', imageUrl: '', availability: 'AVAILABLE', warrantyPeriodMonths: '', active: true });
+    setValidationErrors({});
     setOpen(true);
   };
 
@@ -132,6 +134,7 @@ const ServicesList = ({ provider }) => {
     setOpen(false);
     setEditMode(false);
     setEditingServiceId(null);
+    setValidationErrors({});
   };
 
   const handleMenuEdit = () => {
@@ -216,6 +219,39 @@ const ServicesList = ({ provider }) => {
   };
 
   const handleSave = async () => {
+    const errors = {};
+    
+    if (!form.name || !form.name.trim()) {
+      errors.name = 'Service name is required';
+    } else if (form.name.length > 160) {
+      errors.name = 'Service name must be 160 characters or less';
+    }
+    
+    if (!form.description || !form.description.trim()) {
+      errors.description = 'Description is required';
+    }
+    
+    if (!form.cost || form.cost <= 0) {
+      errors.cost = 'Cost must be greater than 0';
+    }
+    
+    if (!form.location || !form.location.trim()) {
+      errors.location = 'Location is required';
+    } else if (form.location.length > 120) {
+      errors.location = 'Location must be 120 characters or less';
+    }
+    
+    if (form.warrantyPeriodMonths && (form.warrantyPeriodMonths < 0 || !Number.isInteger(parseFloat(form.warrantyPeriodMonths)))) {
+      errors.warrantyPeriodMonths = 'Warranty must be a valid positive number';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    
+    setValidationErrors({});
+    
     // Build DTO matching backend Service DTO
     const serviceData = {
       providerId: provider?.providerId ?? null,
@@ -396,16 +432,60 @@ const ServicesList = ({ provider }) => {
         <DialogTitle>{editMode ? 'Edit Service' : 'Create New Service'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'grid', gap: 2, mt: 1 }}>
-            <TextField label="Service Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} fullWidth required helperText="Max 160 characters" />
-            <TextField label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} fullWidth multiline rows={3} helperText="Detailed description of the service" />
+            <TextField 
+              label="Service Name" 
+              value={form.name} 
+              onChange={(e) => setForm({ ...form, name: e.target.value })} 
+              fullWidth 
+              required 
+              error={!!validationErrors.name}
+              helperText={validationErrors.name || "Max 160 characters"} 
+            />
+            <TextField 
+              label="Description" 
+              value={form.description} 
+              onChange={(e) => setForm({ ...form, description: e.target.value })} 
+              fullWidth 
+              multiline 
+              rows={3} 
+              required
+              error={!!validationErrors.description}
+              helperText={validationErrors.description || "Detailed description of the service"} 
+            />
 
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField label="Cost" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} fullWidth required type="number" InputProps={{ startAdornment: (<InputAdornment position="start">₹</InputAdornment>) }} helperText="Must be greater than 0" />
-              <TextField label="Warranty (Months)" value={form.warrantyPeriodMonths} onChange={(e) => setForm({ ...form, warrantyPeriodMonths: e.target.value })} fullWidth type="number" helperText="Optional warranty period" />
+              <TextField 
+                label="Cost" 
+                value={form.cost} 
+                onChange={(e) => setForm({ ...form, cost: e.target.value })} 
+                fullWidth 
+                required 
+                type="number" 
+                error={!!validationErrors.cost}
+                InputProps={{ startAdornment: (<InputAdornment position="start">₹</InputAdornment>) }} 
+                helperText={validationErrors.cost || "Must be greater than 0"} 
+              />
+              <TextField 
+                label="Warranty (Months)" 
+                value={form.warrantyPeriodMonths} 
+                onChange={(e) => setForm({ ...form, warrantyPeriodMonths: e.target.value })} 
+                fullWidth 
+                type="number" 
+                error={!!validationErrors.warrantyPeriodMonths}
+                helperText={validationErrors.warrantyPeriodMonths || "Optional warranty period"} 
+              />
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} fullWidth helperText="Max 120 characters" />
+              <TextField 
+                label="Location" 
+                value={form.location} 
+                onChange={(e) => setForm({ ...form, location: e.target.value })} 
+                fullWidth 
+                required
+                error={!!validationErrors.location}
+                helperText={validationErrors.location || "Max 120 characters"} 
+              />
               <TextField select label="Availability" value={form.availability} onChange={(e) => setForm({ ...form, availability: e.target.value })} fullWidth>
                 <MenuItem value="AVAILABLE">Available</MenuItem>
                 <MenuItem value="UNAVAILABLE">Unavailable</MenuItem>

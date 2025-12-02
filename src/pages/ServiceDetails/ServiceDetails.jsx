@@ -338,15 +338,17 @@ const ServiceDetails = () => {
                     <Paper sx={{ p: 2 }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                             <Typography variant="h6" sx={{ fontWeight: 700 }}>Customer Reviews ({reviews.length})</Typography>
-                            <FormControl size="small" sx={{ minWidth: 140 }}>
-                                <InputLabel id="sd-review-sort">Sort</InputLabel>
-                                <Select labelId="sd-review-sort" label="Sort" value={reviewSort} onChange={(e) => setReviewSort(e.target.value)}>
-                                    <MenuItem value="newest">Newest</MenuItem>
-                                    <MenuItem value="oldest">Oldest</MenuItem>
-                                    <MenuItem value="highest">Highest Rating</MenuItem>
-                                    <MenuItem value="lowest">Lowest Rating</MenuItem>
-                                </Select>
-                            </FormControl>
+                            {reviews.length > 0 && (
+                                <FormControl size="small" sx={{ minWidth: 140 }}>
+                                    <InputLabel id="sd-review-sort">Sort</InputLabel>
+                                    <Select labelId="sd-review-sort" label="Sort" value={reviewSort} onChange={(e) => setReviewSort(e.target.value)}>
+                                        <MenuItem value="newest">Newest</MenuItem>
+                                        <MenuItem value="oldest">Oldest</MenuItem>
+                                        <MenuItem value="highest">Highest Rating</MenuItem>
+                                        <MenuItem value="lowest">Lowest Rating</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            )}
                         </Stack>
 
                         <Box sx={{ mt: 2 }}>
