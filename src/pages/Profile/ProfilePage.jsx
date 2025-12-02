@@ -174,10 +174,55 @@ const ProfilePage = () => {
         }
       }
       
+      // Handle both single order object and array of orders
+      const ordersArray = Array.isArray(response) ? response : [response];
+      
+      // Enrich orders with service and provider details
+      const enrichedOrders = await Promise.all(
+        ordersArray.map(async (order) => {
+          let serviceName = 'Unknown Service';
+          let providerName = 'Unknown Provider';
+          let providerPhone = 'N/A';
+          let providerData = null;
+
+          // Fetch service details
+          if (order.serviceId) {
+            try {
+              const serviceData = await apiClient.get(`/api/v1/services/${order.serviceId}`);
+              serviceName = serviceData?.serviceName || `Service ${order.serviceId}`;
+            } catch (err) {
+              console.warn(`Failed to fetch service ${order.serviceId}:`, err);
+            }
+          }
+
+          // Fetch provider details
+          if (order.providerId) {
+            try {
+              providerData = await apiClient.get(`/api/v1/providers/${order.providerId}`);
+              providerName = providerData?.providerName || `Provider ${order.providerId}`;
+              providerPhone = providerData?.phone || 'N/A';
+            } catch (err) {
+              console.warn(`Failed to fetch provider ${order.providerId}:`, err);
+            }
+          }
+
+          return { 
+            ...order, 
+            serviceName,
+            providerData: {
+              providerId: order.providerId,
+              providerName,
+              phone: providerPhone,
+              ...providerData
+            }
+          };
+        })
+      );
+      
       // Sort orders by creation date (newest first)
-      const sortedOrders = Array.isArray(response) 
-        ? [...response].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        : [];
+      const sortedOrders = enrichedOrders.sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      );
       
       setOrders(sortedOrders);
     } catch (error) {
@@ -737,7 +782,7 @@ const ProfilePage = () => {
                   {/* Compact Services Section */}
                   {order.lineItemDTOS && order.lineItemDTOS.length > 0 ? (
                     <Stack spacing={1.5}>
-                      {order.lineItemDTOS.map((lineItem, index) => (
+                      {order.lineItemDTOS.map((lineItem) => (
                         <Box 
                           key={lineItem.lineItemId || lineItem.serviceName}
                           sx={{ 
@@ -777,9 +822,30 @@ const ProfilePage = () => {
                       ))}
                     </Stack>
                   ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      No service details available
-                    </Typography>
+                    <Box 
+                      sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        p: 1.5, 
+                        bgcolor: 'grey.50',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Box flex={1} minWidth={0}>
+                        <Typography variant="body2" fontWeight="500" color="text.primary" noWrap>
+                          {order.serviceName || 'Service'}
+                        </Typography>
+                        {order.quantity && (
+                          <Typography variant="caption" color="text.secondary">
+                            Qty: {order.quantity}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Typography variant="body2" fontWeight="600" color="text.primary" sx={{ flexShrink: 0 }}>
+                        {formatCurrency(order.totalCost)}
+                      </Typography>
+                    </Box>
                   )}
 
                   {/* Compact Provider Info and Actions */}
@@ -794,7 +860,7 @@ const ProfilePage = () => {
                       </Avatar>
                       <Box>
                         <Typography variant="body2" fontWeight="500" color="text.primary">
-                          {order.providerId?.providerName || 'Provider'}
+                          {order.providerData?.providerName || 'Provider'}
                         </Typography>
                       </Box>
                     </Box>
