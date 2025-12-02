@@ -56,11 +56,13 @@ const ServiceProviderDetails = () => {
             console.log('Loading provider with ID:', providerId);
             setLoading(true);
             try {
+                const token = localStorage.getItem('token');
+                
                 // Fetch provider details from API
                 const response = await fetch(`http://localhost:8080/api/v1/providers/${providerId}`, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
                         'Content-Type': 'application/json',
+                        ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                     },
                 });
                 
@@ -82,8 +84,8 @@ const ServiceProviderDetails = () => {
                 try {
                     const servicesResponse = await fetch(`http://localhost:8080/api/v1/services/provider/${providerId}`, {
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
                             'Content-Type': 'application/json',
+                            ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                         },
                     });
                     
@@ -103,8 +105,8 @@ const ServiceProviderDetails = () => {
                 try {
                     const reviewsResponse = await fetch(`http://localhost:8080/api/v1/feedbacks/provider/${providerId}`, {
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
                             'Content-Type': 'application/json',
+                            ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                         },
                     });
                     
@@ -120,8 +122,8 @@ const ServiceProviderDetails = () => {
                                     if (review.userId) {
                                         const userResponse = await fetch(`http://localhost:8080/api/v1/users/${review.userId}`, {
                                             headers: {
-                                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
                                                 'Content-Type': 'application/json',
+                                                ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                                             },
                                         });
                                         if (userResponse.ok) {

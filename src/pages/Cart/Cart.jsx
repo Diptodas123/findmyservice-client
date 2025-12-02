@@ -214,8 +214,8 @@ const Cart = () => {
                                                 >
                                                     {it.description}
                                                 </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Provider: {it.providerName || it.providerId}
+                                                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600, mt: 0.5 }}>
+                                                    Provider ID: {it.providerId || 'Unknown'}
                                                 </Typography>
                                             </Box>
                                         </Stack>

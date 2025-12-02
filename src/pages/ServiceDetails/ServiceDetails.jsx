@@ -28,36 +28,39 @@ const ServiceDetails = () => {
                 setLoading(true);
                 setError(null);
                 
+                const token = localStorage.getItem('token');
+                console.log('Token value:', token, 'Type:', typeof token);
+
                 // Fetch service details
                 const serviceResponse = await fetch(`http://localhost:8080/api/v1/services/${id}`, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
                         'Content-Type': 'application/json',
+                        ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                     },
                 });
-                
+
                 if (!serviceResponse.ok) {
                     throw new Error(`HTTP error! status: ${serviceResponse.status}`);
                 }
-                
+
                 const serviceData = await serviceResponse.json();
-                
+
                 if (!serviceData) {
                     throw new Error('Service not found');
                 }
-                
+
                 setService(serviceData);
-                
+
                 // Fetch provider details if providerId exists
                 if (serviceData.providerId) {
                     try {
                         const providerResponse = await fetch(`http://localhost:8080/api/v1/providers/${serviceData.providerId}`, {
                             headers: {
-                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
                                 'Content-Type': 'application/json',
+                                ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                             },
                         });
-                        
+
                         if (providerResponse.ok) {
                             const providerData = await providerResponse.json();
                             setProvider(providerData);
@@ -76,19 +79,19 @@ const ServiceDetails = () => {
                         });
                     }
                 }
-                
+
                 // Fetch reviews for the service
                 try {
                     const reviewsResponse = await fetch(`http://localhost:8080/api/v1/feedbacks/service/${id}`, {
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
                             'Content-Type': 'application/json',
+                            ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                         },
                     });
-                    
+
                     if (reviewsResponse.ok) {
                         const reviewsData = await reviewsResponse.json();
-                        
+
                         // Enrich reviews with user details
                         const enrichedReviews = await Promise.all(
                             (Array.isArray(reviewsData) ? reviewsData : []).map(async (review) => {
@@ -98,15 +101,15 @@ const ServiceDetails = () => {
                                     if (review.userId) {
                                         const userResponse = await fetch(`http://localhost:8080/api/v1/users/${review.userId}`, {
                                             headers: {
-                                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
                                                 'Content-Type': 'application/json',
+                                                ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                                             },
                                         });
                                         if (userResponse.ok) {
                                             userDetails = await userResponse.json();
                                         }
                                     }
-                                    
+
                                     // Transform review data with user details
                                     return {
                                         ...review,
@@ -129,7 +132,7 @@ const ServiceDetails = () => {
                                 }
                             })
                         );
-                        
+
                         setReviews(enrichedReviews);
                     } else {
                         console.log('No reviews found or error fetching reviews');
@@ -139,7 +142,7 @@ const ServiceDetails = () => {
                     console.error('Error fetching reviews:', reviewErr);
                     setReviews([]);
                 }
-                
+
             } catch (err) {
                 console.error('Error fetching service details:', err);
                 setError(err.message || 'Failed to load service details');
@@ -148,7 +151,7 @@ const ServiceDetails = () => {
                 setLoading(false);
             }
         };
-        
+
         if (id) {
             fetchServiceDetails();
         }
@@ -165,7 +168,7 @@ const ServiceDetails = () => {
     };
     const [reviewSort, setReviewSort] = React.useState('newest');
     const [expandedReviewIds, setExpandedReviewIds] = React.useState([]);
-    
+
     // Review form state
     const [reviewRating, setReviewRating] = React.useState(0);
     const [reviewComment, setReviewComment] = React.useState('');
@@ -193,7 +196,7 @@ const ServiceDetails = () => {
 
     const handleAddToCart = () => {
         if (!service) return;
-        
+
         const exists = items.find((i) => i.serviceId === service.serviceId);
         if (exists) {
             toastMessage({ msg: `${service.serviceName || service.name} is already in cart`, type: 'info' });
@@ -235,6 +238,8 @@ const ServiceDetails = () => {
 
         setSubmittingReview(true);
         try {
+            const token = localStorage.getItem('token');
+            
             const reviewPayload = {
                 userId: user.userId,
                 serviceId: service.serviceId,
@@ -247,8 +252,8 @@ const ServiceDetails = () => {
             const response = await fetch('http://localhost:8080/api/v1/feedbacks', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'Content-Type': 'application/json',
+                    ...(token && token !== 'null' && token !== 'undefined' ? { 'Authorization': `Bearer ${token}` } : {}),
                 },
                 body: JSON.stringify(reviewPayload),
             });
@@ -261,16 +266,16 @@ const ServiceDetails = () => {
             // Reset form
             setReviewRating(0);
             setReviewComment('');
-            
+
             toastMessage({ msg: 'Review submitted successfully!', type: 'success' });
-            
+
             // Refresh reviews
             window.location.reload(); // Simple refresh - you could also re-fetch reviews
         } catch (error) {
             console.error('Error submitting review:', error);
-            toastMessage({ 
-                msg: error.message || 'Failed to submit review. Please try again.', 
-                type: 'error' 
+            toastMessage({
+                msg: error.message || 'Failed to submit review. Please try again.',
+                type: 'error'
             });
         } finally {
             setSubmittingReview(false);

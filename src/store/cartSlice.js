@@ -31,6 +31,9 @@ const cartSlice = createSlice({
         state.items = state.items.filter(i => !predicate(i));
       } else if (predicate && typeof predicate === 'object' && predicate.providerId && predicate.serviceName) {
         state.items = state.items.filter(i => !(i.providerId === predicate.providerId && i.serviceName === predicate.serviceName));
+      } else {
+        // Handle serviceId as a simple value
+        state.items = state.items.filter(i => i.serviceId !== predicate);
       }
     },
     clearCart(state) {
