@@ -103,19 +103,17 @@ export default function Search() {
   // Extract unique locations and categories from services
   const locationOptions = Array.from(new Set(services.map(s => s.location).filter(Boolean))).sort();
   
-  // Extract categories by grouping similar service names
-  const categoryMap = new Map();
-  services.forEach(service => {
-    if (service.serviceName) {
-      // Take first meaningful word (excluding common words)
-      const words = service.serviceName.split(' ');
-      const category = words[0]; // Use first word as category
-      if (category && category.length > 2) {
-        categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
-      }
-    }
-  });
-  const categories = Array.from(categoryMap.keys()).sort();
+  // Extract first word of each service name as category
+  const categories = Array.from(
+    new Set(
+      services
+        .map(s => s.serviceName?.trim().split(/\s+/)[0])
+        .filter(Boolean)
+    )
+  ).sort();
+  
+  console.log('Available categories:', categories);
+  console.log('Total services:', services.length);
 
   // Rating options
   const ratingOptions = [5, 4, 3, 2, 1];
@@ -127,9 +125,10 @@ export default function Search() {
       service.serviceName?.toLowerCase().includes(query.toLowerCase()) ||
       service.description?.toLowerCase().includes(query.toLowerCase());
 
-    // Category filter
-    const serviceCategory = service.serviceName?.split(' ')[0];
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(serviceCategory);
+    // Category filter - match first word of service name
+    const serviceCategory = service.serviceName?.trim().split(/\s+/)[0];
+    const matchesCategory = selectedCategories.length === 0 || 
+      selectedCategories.includes(serviceCategory);
 
     // Price filter
     const servicePrice = Number(service.cost) || 0;

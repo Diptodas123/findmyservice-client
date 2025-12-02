@@ -5,7 +5,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
-import { MOCK_PROVIDER } from '../../../mockData';
 import cloudinary from '../../utils/cloudinary';
 import apiClient from '../../utils/apiClient';
 import toastMessage from '../../utils/toastMessage';
@@ -42,7 +41,21 @@ const PhotoThumbnail = memo(function PhotoThumbnail({ src, onClick, onRemove, wi
 
 const ProviderHomeView = ({ provider: providerProp, setProvider: setProviderProp, hideHero = false }) => {
   const dispatch = useDispatch();
-  const initial = providerProp ? { ...providerProp } : { ...MOCK_PROVIDER };
+  const initial = providerProp || {
+    providerName: '',
+    description: '',
+    email: '',
+    phone: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    profilePictureUrl: '',
+    imageUrls: [],
+    avgRating: 0,
+    totalRatings: 0
+  };
   const [p, setPLocal] = useState(initial);
   const setP = setProviderProp || setPLocal;
   const [openEdit, setOpenEdit] = useState(false);
@@ -188,6 +201,7 @@ const ProviderHomeView = ({ provider: providerProp, setProvider: setProviderProp
               </Box>
             </Box>
             <TextField label="Provider Name" value={form.providerName} onChange={(e) => setForm({ ...form, providerName: e.target.value })} fullWidth />
+            <TextField label="Description" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} fullWidth multiline rows={3} />
             <TextField label="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} fullWidth />
             <TextField label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} fullWidth />
             <TextField label="Address Line 1" value={form.addressLine1} onChange={(e) => setForm({ ...form, addressLine1: e.target.value })} fullWidth />
