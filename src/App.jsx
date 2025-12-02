@@ -24,35 +24,46 @@ function InnerApp({ userRole }) {
 
   return (
     <>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
-
-      {userRole !== 'PROVIDER' && !isAuthRoute ? (
+      {!isAuthRoute && (
         <>
-          <Header />
-          <Box component="main" sx={{ minHeight: 'calc(100vh - 160px)' }}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+          </Routes>
+
+          {userRole !== 'PROVIDER' ? (
+            <>
+              <Header />
+              <Box component="main" sx={{ minHeight: 'calc(100vh - 160px)' }}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path='/service-details/:id' element={<ServiceDetails />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Box>
+              <GlobalFooter />
+            </>
+          ) : (
             <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />
+              <Route path='/service-provider-dashboard/*' element={<ProviderDashboard />} />
               <Route path="/search" element={<Search />} />
+              <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
               <Route path='/service-details/:id' element={<ServiceDetails />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path='*' element={<NotFound />} />
             </Routes>
-          </Box>
-          <GlobalFooter />
+          )}
         </>
-      ) : (
+      )}
+
+      {isAuthRoute && (
         <Routes>
-          <Route path='/service-provider-dashboard/*' element={<ProviderDashboard />} />
-          <Route path="/search" element={<Search />} />
-          <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
-          <Route path='/service-details/:id' element={<ServiceDetails />} />
-          <Route path='*' element={<NotFound />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
         </Routes>
       )}
 
