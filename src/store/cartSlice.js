@@ -11,14 +11,6 @@ const cartSlice = createSlice({
     addItem(state, action) {
       const item = action.payload;
       
-      // Check if adding from different provider
-      if (state.items.length > 0) {
-        const currentProviderId = state.items[0].providerId;
-        if (currentProviderId !== item.providerId) {
-          return; // Block adding - validation in component
-        }
-      }
-      
       // Check if item already exists
       const exists = state.items.find(i => i.serviceId === item.serviceId);
       if (!exists) {
