@@ -92,19 +92,7 @@ const BookingsList = ({ provider }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/orders/provider/${provider.providerId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const orders = await response.json();
+      const orders = await apiClient.get(`/api/v1/orders/provider/${provider.providerId}`);
       
       // Fetch additional details for each order
       const enrichedBookings = await Promise.all(
@@ -114,16 +102,7 @@ const BookingsList = ({ provider }) => {
             let userDetails = null;
             if (order.userId) {
               try {
-                const userResponse = await fetch(`http://localhost:8080/api/v1/users/${order.userId}`, {
-                  method: 'GET',
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json',
-                  },
-                });
-                if (userResponse.ok) {
-                  userDetails = await userResponse.json();
-                }
+                userDetails = await apiClient.get(`/api/v1/users/${order.userId}`);
               } catch (error) {
                 console.warn('Failed to fetch user details:', error);
               }
@@ -133,16 +112,7 @@ const BookingsList = ({ provider }) => {
             let serviceDetails = null;
             if (order.serviceId) {
               try {
-                const serviceResponse = await fetch(`http://localhost:8080/api/v1/services/${order.serviceId}`, {
-                  method: 'GET',
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json',
-                  },
-                });
-                if (serviceResponse.ok) {
-                  serviceDetails = await serviceResponse.json();
-                }
+                serviceDetails = await apiClient.get(`/api/v1/services/${order.serviceId}`);
               } catch (error) {
                 console.warn('Failed to fetch service details:', error);
               }
@@ -264,14 +234,7 @@ const BookingsList = ({ provider }) => {
         requestBody.scheduledDate = scheduledDate.toISOString();
       }
 
-      const response = await fetch(`http://localhost:8080/api/v1/orders/${bookingId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await apiClient.patch(`/api/v1/orders/${bookingId}`, requestBody);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

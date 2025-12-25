@@ -61,13 +61,7 @@ const Analytics = ({ provider }) => {
           return [];
         }),
         // Fetch provider reviews/feedback
-        fetch(`http://localhost:8080/api/v1/feedbacks/provider/${provider.providerId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-        }).then(res => res.ok ? res.json() : []).catch(err => {
+        apiClient.get(`/api/v1/feedbacks/provider/${provider.providerId}`).catch(err => {
           console.warn('Failed to fetch reviews:', err);
           return [];
         }),

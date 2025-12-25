@@ -1,4 +1,6 @@
 import toastMessage from './toastMessage';
+import { API_BASE_URL } from '../config/config';
+
 const DEFAULT_TIMEOUT = 15000; // 15s
 
 function buildUrl(base, path, query) {
@@ -11,7 +13,7 @@ function buildUrl(base, path, query) {
     return url.toString();
 }
 
-async function request({ method = 'GET', path = '/', baseURL = '', query, body, headers = {}, timeout = DEFAULT_TIMEOUT }) {
+async function request({ method = 'GET', path = '/', baseURL, query, body, headers = {}, timeout = DEFAULT_TIMEOUT }) {
     const token = (() => {
         try {
             return localStorage.getItem('token');
@@ -20,7 +22,8 @@ async function request({ method = 'GET', path = '/', baseURL = '', query, body, 
         }
     })();
 
-    const url = buildUrl(baseURL || window.location.origin, path, query);
+    // Use API_BASE_URL from config if baseURL not explicitly provided
+    const url = buildUrl(baseURL !== undefined ? baseURL : API_BASE_URL, path, query);
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
