@@ -60,19 +60,7 @@ const ReviewsManagement = ({ provider }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/feedbacks/provider/${provider.providerId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const feedbacks = await response.json();
+      const feedbacks = await apiClient.get(`/api/v1/feedbacks/provider/${provider.providerId}`);
       
       // Fetch additional details for each feedback
       const enrichedFeedbacks = await Promise.all(
@@ -82,16 +70,7 @@ const ReviewsManagement = ({ provider }) => {
             let userDetails = null;
             if (feedback.userId) {
               try {
-                const userResponse = await fetch(`http://localhost:8080/api/v1/users/${feedback.userId}`, {
-                  method: 'GET',
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json',
-                  },
-                });
-                if (userResponse.ok) {
-                  userDetails = await userResponse.json();
-                }
+                userDetails = await apiClient.get(`/api/v1/users/${feedback.userId}`);
               } catch (error) {
                 console.warn('Failed to fetch user details:', error);
               }
@@ -101,16 +80,7 @@ const ReviewsManagement = ({ provider }) => {
             let serviceDetails = null;
             if (feedback.serviceId) {
               try {
-                const serviceResponse = await fetch(`http://localhost:8080/api/v1/services/${feedback.serviceId}`, {
-                  method: 'GET',
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json',
-                  },
-                });
-                if (serviceResponse.ok) {
-                  serviceDetails = await serviceResponse.json();
-                }
+                serviceDetails = await apiClient.get(`/api/v1/services/${feedback.serviceId}`);
               } catch (error) {
                 console.warn('Failed to fetch service details:', error);
               }
