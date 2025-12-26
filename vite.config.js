@@ -14,6 +14,19 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'mui-vendor': ['@mui/material', '@mui/icons-material'],
+            'redux-vendor': ['@reduxjs/toolkit', 'react-redux'],
+            'pdf-vendor': ['jspdf', 'jspdf-autotable'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
+    },
     server: {
       proxy: {
         '/api': {
