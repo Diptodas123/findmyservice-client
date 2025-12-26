@@ -1,21 +1,30 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import Header from './components/GlobalHeader/Header';
-import HomePage from './pages/Home/HomePage.jsx';
-import ProfilePage from './pages/Profile/ProfilePage.jsx';
 import GlobalFooter from './components/GlobalFooter/GlobalFooter';
 import BackToTop from './components/BackToTop/BackToTop';
-import Login from './pages/Login/Login.jsx';
-import Signup from './pages/Signup/Signup.jsx';
-import ServiceProviderDetails from './pages/ServiceProviderDetails/ServiceProviderDetails.jsx';
-import ServiceDetails from './pages/ServiceDetails/ServiceDetails.jsx';
-import Cart from './pages/Cart/Cart.jsx';
-import ProviderDashboard from './pages/ProviderDashboard/ProviderDashboard.jsx';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import Search from './pages/Search/Search.jsx';
-import NotFound from './pages/NotFound/NotFound.jsx';
-import Contact from './pages/Contact/Contact.jsx';
+
+// Lazy load page components for code splitting
+const HomePage = lazy(() => import('./pages/Home/HomePage.jsx'));
+const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage.jsx'));
+const Login = lazy(() => import('./pages/Login/Login.jsx'));
+const Signup = lazy(() => import('./pages/Signup/Signup.jsx'));
+const ServiceProviderDetails = lazy(() => import('./pages/ServiceProviderDetails/ServiceProviderDetails.jsx'));
+const ServiceDetails = lazy(() => import('./pages/ServiceDetails/ServiceDetails.jsx'));
+const Cart = lazy(() => import('./pages/Cart/Cart.jsx'));
+const ProviderDashboard = lazy(() => import('./pages/ProviderDashboard/ProviderDashboard.jsx'));
+const Search = lazy(() => import('./pages/Search/Search.jsx'));
+const NotFound = lazy(() => import('./pages/NotFound/NotFound.jsx'));
+const Contact = lazy(() => import('./pages/Contact/Contact.jsx'));
+
+const LoadingFallback = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+    <CircularProgress />
+  </Box>
+);
 
 function InnerApp({ userRole }) {
   const location = useLocation();
@@ -26,45 +35,53 @@ function InnerApp({ userRole }) {
     <>
       {!isAuthRoute && (
         <>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-          </Routes>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+            </Routes>
+          </Suspense>
 
           {userRole !== 'PROVIDER' ? (
             <>
               <Header />
               <Box component="main" sx={{ minHeight: 'calc(100vh - 160px)' }}>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path='/service-details/:id' element={<ServiceDetails />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path='/service-providers/:id' element={<ServiceProviderDetails />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path='/service-details/:id' element={<ServiceDetails />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
               </Box>
               <GlobalFooter />
             </>
           ) : (
-            <Routes>
-              <Route path='/service-provider-dashboard/*' element={<ProviderDashboard />} />
-              <Route path="/search" element={<Search />} />
-              <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
-              <Route path='/service-details/:id' element={<ServiceDetails />} />
-              <Route path='*' element={<NotFound />} />
-            </Routes>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path='/service-provider-dashboard/*' element={<ProviderDashboard />} />
+                <Route path="/search" element={<Search />} />
+                <Route path='/service-providers/:providerId' element={<ServiceProviderDetails />} />
+                <Route path='/service-details/:id' element={<ServiceDetails />} />
+                <Route path='*' element={<NotFound />} />
+              </Routes>
+            </Suspense>
           )}
         </>
       )}
 
       {isAuthRoute && (
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+          </Routes>
+        </Suspense>
       )}
 
       <BackToTop />
