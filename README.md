@@ -113,9 +113,9 @@ State management:
 
 ## Testing
 
-### Install Playwright Browsers
+### Install Cypress
 ```bash
-npx playwright install
+npx cypress install
 ```
 
 ### Unit & Integration Tests
@@ -135,17 +135,14 @@ npm run test:coverage
 
 ### E2E Tests
 ```bash
-# Run E2E tests
+# Run E2E tests (headless)
 npm run test:e2e
 
-# Run E2E tests with UI
-npm run test:e2e:ui
+# Open Cypress Test Runner (interactive)
+npm run test:e2e:open
 
 # Run E2E tests in headed mode
 npm run test:e2e:headed
-
-# Run specific test file
-npx playwright test e2e/profile.spec.js
 ```
 
 ### Debugging Tests
@@ -153,10 +150,10 @@ npx playwright test e2e/profile.spec.js
 # Debug Vitest tests with UI
 npm run test:ui
 
-# Debug Playwright tests
-npx playwright test --debug
+# Open Cypress interactive mode
+npm run test:e2e:open
 
-# Run Playwright with headed browser
+# Run Cypress with headed browser
 npm run test:e2e:headed
 ```
 

@@ -14,7 +14,7 @@ const Root = () => {
   const [modeState, setModeState] = useState(() => {
     try {
       return localStorage.getItem('themeMode') || 'light';
-    } catch (e) {
+    } catch {
       return 'light';
     }
   });
@@ -25,7 +25,7 @@ const Root = () => {
       const next = typeof value === 'function' ? value(prev) : value;
       try {
         localStorage.setItem('themeMode', next);
-      } catch (e) {
+      } catch {
         // ignore
       }
       return next;

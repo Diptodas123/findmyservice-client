@@ -15,7 +15,7 @@ import {
   Link 
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useThemeMode } from '../../theme/useThemeMode';
 
 export default function FilterSidebar({
@@ -31,14 +31,9 @@ export default function FilterSidebar({
   const [showAllCategories, setShowAllCategories] = useState(false);
   const visibleCategories = showAllCategories ? categories : categories.slice(0, 5);
 
-  const [sliderValue, setSliderValue] = useState([Number(priceMin) || 0, Number(priceMax) || 10000]);
-
-  useEffect(() => {
-    setSliderValue([Number(priceMin) || 0, Number(priceMax) || 10000]);
-  }, [priceMin, priceMax]);
+  const sliderValue = [Number(priceMin) || 0, Number(priceMax) || 10000];
 
   const handleSliderChange = (e, value) => {
-    setSliderValue(value);
     setPriceMin(value[0]);
     setPriceMax(value[1]);
   };
@@ -46,13 +41,11 @@ export default function FilterSidebar({
   const handleMinInputChange = (e) => {
     const val = Number(e.target.value);
     setPriceMin(val);
-    setSliderValue([val, sliderValue[1]]);
   };
 
   const handleMaxInputChange = (e) => {
     const val = Number(e.target.value);
     setPriceMax(val);
-    setSliderValue([sliderValue[0], val]);
   };
 
   return (
