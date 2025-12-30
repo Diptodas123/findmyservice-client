@@ -47,7 +47,7 @@ jobs:
       - name: Archive coverage reports
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-report-${{ matrix.node-version }}
           path: coverage/
 
   e2e-tests:
