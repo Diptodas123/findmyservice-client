@@ -111,6 +111,55 @@ State management:
 - Mock data: `mockData.js` can be used during development when backend is unavailable.
 - Images: Use `utils/cloudinary.js` to construct optimized Cloudinary URLs.
 
+## Testing
+
+### Install Playwright Browsers
+```bash
+npx playwright install
+```
+
+### Unit & Integration Tests
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with UI
+npm run test:ui
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### E2E Tests
+```bash
+# Run E2E tests
+npm run test:e2e
+
+# Run E2E tests with UI
+npm run test:e2e:ui
+
+# Run E2E tests in headed mode
+npm run test:e2e:headed
+
+# Run specific test file
+npx playwright test e2e/profile.spec.js
+```
+
+### Debugging Tests
+```bash
+# Debug Vitest tests with UI
+npm run test:ui
+
+# Debug Playwright tests
+npx playwright test --debug
+
+# Run Playwright with headed browser
+npm run test:e2e:headed
+```
+
 ## Contributing
 
 1) Create a feature branch
@@ -121,19 +170,3 @@ State management:
 ## License
 
 This project’s license is not yet specified. If you intend to open-source, add an SPDX-compatible license file (e.g., MIT) and reference it here.
-
-## FAQ
-
-- How do I change the API base URL?
-  - Set `VITE_API_BASE_URL` in `.env` and restart dev server.
-- How do I enable dark mode?
-  - Use `themeModeContext.jsx` to toggle, ensure components consume theme tokens from `theme/theme.js`.
-- Can I run with mock data?
-  - Point `serviceAPI.js` to local mocks or use `mockData.js` where applicable during development.# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
