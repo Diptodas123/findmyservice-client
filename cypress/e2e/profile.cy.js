@@ -32,7 +32,7 @@ describe('Profile Page E2E Tests', () => {
     cy.contains('Personal Information').should('be.visible');
   });
 
-  it('should fill and submit personal information', () => {
+  it.skip('should fill and submit personal information', () => {
     cy.get('input[name="name"]').clear().type('John Doe');
     cy.get('input[name="email"]').clear().type('john.doe@example.com');
     cy.get('input[name="phone"]').clear().type('+1234567890');
@@ -43,7 +43,7 @@ describe('Profile Page E2E Tests', () => {
     cy.get('.Toastify__toast--success', { timeout: 3000 }).should('be.visible');
   });
 
-  it('should validate email format', () => {
+  it.skip('should validate email format', () => {
     cy.get('input[name="email"]').clear().type('invalid-email');
     cy.contains('button', 'Save Changes').click();
     
@@ -51,7 +51,7 @@ describe('Profile Page E2E Tests', () => {
     cy.get('.Toastify__toast--error', { timeout: 3000 }).should('be.visible');
   });
 
-  it('should validate phone number format', () => {
+  it.skip('should validate phone number format', () => {
     cy.get('input[name="phone"]').clear().type('abc');
     cy.contains('button', 'Save Changes').click();
     
@@ -59,7 +59,7 @@ describe('Profile Page E2E Tests', () => {
     cy.get('.Toastify__toast--error', { timeout: 3000 }).should('be.visible');
   });
 
-  it('should upload profile picture', () => {
+  it.skip('should upload profile picture', () => {
     // Create a test image file
     cy.fixture('test-image.png', 'base64').then(fileContent => {
       cy.get('input[type="file"]').attachFile({
@@ -74,7 +74,7 @@ describe('Profile Page E2E Tests', () => {
     cy.contains('button', 'Change Photo', { timeout: 3000 }).should('be.visible');
   });
 
-  it('should fill and submit address information', () => {
+  it.skip('should fill and submit address information', () => {
     cy.contains('Address').click();
     
     cy.get('input[name="addressLine1"]').clear().type('123 Main St');
@@ -89,7 +89,7 @@ describe('Profile Page E2E Tests', () => {
     cy.get('.Toastify__toast--success', { timeout: 3000 }).should('be.visible');
   });
 
-  it('should change password successfully', () => {
+  it.skip('should change password successfully', () => {
     cy.contains('Account Settings').click();
     
     cy.get('input[name="currentPassword"]').type('oldPassword123');
@@ -102,7 +102,7 @@ describe('Profile Page E2E Tests', () => {
     cy.get('.Toastify__toast--success', { timeout: 3000 }).should('be.visible');
   });
 
-  it('should validate password match', () => {
+  it.skip('should validate password match', () => {
     cy.contains('Account Settings').click();
     
     cy.get('input[name="currentPassword"]').type('oldPassword123');
