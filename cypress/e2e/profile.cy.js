@@ -1,4 +1,3 @@
-/* eslint-env cypress/globals */
 describe('Profile Page E2E Tests', () => {
   beforeEach(() => {
     cy.visit('/profile');
