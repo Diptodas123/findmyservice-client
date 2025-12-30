@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, Paper, Stack, Typography, Skeleton, Pagination, IconButton, Button } from '@mui/material';
 import { LocalOffer as LocalOfferIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, ShoppingCart as ShoppingCartIcon, CheckCircle as CheckCircleIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { addItem, removeItem, clearCart } from '../../store/cartSlice';
+import { addItem, removeItem } from '../../store/cartSlice';
 import toastMessage from '../../utils/toastMessage';
 import { useNavigate } from 'react-router-dom';
 import { useThemeMode } from '../../theme/useThemeMode';
@@ -12,7 +12,7 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
     const [page, setPage] = useState(1);
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.cart.items);
-    const { mode } = useThemeMode();
+    const { mode: _mode } = useThemeMode();
     const pageSize = initialPageSize;
 
     const isInCart = (serviceId) => cartItems.some(item => item.serviceId === serviceId);

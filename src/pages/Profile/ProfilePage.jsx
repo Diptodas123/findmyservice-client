@@ -48,7 +48,7 @@ import { setUser } from '../../store/userSlice';
 const ProfilePage = () => {
   const dispatch = useDispatch();
   const reduxProfile = useSelector((s) => s.user?.profile || {});
-  const cartItems = useSelector((s) => s.cart?.items || []);
+  const _cartItems = useSelector((s) => s.cart?.items || []);
   const theme = useTheme();
 
   const [activeTab, setActiveTab] = useState('personal');
@@ -235,13 +235,7 @@ const ProfilePage = () => {
     if (activeTab === 'orders' && reduxProfile?.userId) {
       fetchOrderHistory();
     }
-  }, [activeTab, reduxProfile?.userId]);
-
-  useEffect(() => {
-    if (activeTab === 'orders' && reduxProfile?.userId) {
-      fetchOrderHistory();
-    }
-  }, [activeTab, reduxProfile?.userId]);
+  }, [activeTab, reduxProfile?.userId, fetchOrderHistory]);
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

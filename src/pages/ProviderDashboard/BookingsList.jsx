@@ -82,7 +82,7 @@ const BookingsList = ({ provider }) => {
     if (provider?.providerId) {
       fetchBookings();
     }
-  }, [provider?.providerId]);
+  }, [provider?.providerId, fetchBookings]);
 
   const fetchBookings = async () => {
     if (!provider?.providerId) {
@@ -240,7 +240,7 @@ const BookingsList = ({ provider }) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const updatedOrder = await response.json();
+      const _updatedOrder = await response.json();
       
       // Update the local bookings state
       setBookings((prev) =>
@@ -302,11 +302,6 @@ const BookingsList = ({ provider }) => {
   const handleCancel = (bookingId) => {
     updateBookingStatus(bookingId, 'CANCELLED');
     handleCloseMenu();
-  };
-
-  const handleOpenMenu = (event, bookingId) => {
-    setMenuAnchor(event.currentTarget);
-    setMenuBookingId(bookingId);
   };
 
   const handleCloseMenu = () => {

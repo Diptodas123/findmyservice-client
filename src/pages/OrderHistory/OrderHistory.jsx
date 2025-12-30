@@ -48,7 +48,7 @@ const OrderHistory = () => {
         
         // Token exists, either fetch orders directly or wait for user profile
         fetchOrderHistory();
-    }, [user?.userId]);
+    }, [user?.userId, fetchOrderHistory]);
 
     const fetchOrderHistory = async () => {
         try {
@@ -146,7 +146,7 @@ const OrderHistory = () => {
         });
     };
 
-    const handleReorderServices = (lineItems) => {
+    const handleReorderServices = () => {
         // Add services back to cart for reorder
         toastMessage({ 
             msg: 'Services added to cart for reorder!', 
@@ -260,7 +260,7 @@ const OrderHistory = () => {
                                     </Typography>
                                     {order.lineItemDTOS && order.lineItemDTOS.length > 0 ? (
                                         <Stack spacing={2}>
-                                            {order.lineItemDTOS.map((lineItem, index) => (
+                                            {order.lineItemDTOS.map((lineItem) => (
                                                 <Box 
                                                     key={lineItem.lineItemId || lineItem.serviceName}
                                                     sx={{ 

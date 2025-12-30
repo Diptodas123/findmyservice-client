@@ -26,7 +26,7 @@ const Contact = () => {
     subject: '',
     message: ''
   });
-  const [success, setSuccess] = useState(false);
+  const [success, _setSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
