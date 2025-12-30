@@ -1,3 +1,4 @@
+/* global global */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import cloudinary from './cloudinary';
 import toastMessage from './toastMessage';
@@ -89,7 +90,7 @@ describe('cloudinary', () => {
       try {
         await cloudinary.uploadImage(mockFile);
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch {
         expect(toastMessage).toHaveBeenCalledWith({
           msg: 'Failed to upload image. Check your network or try again.',
           type: 'error',

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '../../../src/test/test-utils';
+import { render } from '../../../src/test/test-utils';
 import Banner from './Banner';
 
 describe('Banner', () => {

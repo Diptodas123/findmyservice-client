@@ -4,7 +4,6 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import ServiceCard from './ServiceCard';
 import cartReducer from '../../store/cartSlice';
-import toastMessage from '../../utils/toastMessage';
 
 vi.mock('../../utils/toastMessage', () => ({
   default: vi.fn(),
@@ -144,7 +143,7 @@ describe('ServiceCard', () => {
 
   it('should show add to cart button when not in cart', () => {
     const store = createMockStore();
-    const { container } = render(
+    const { container: _container } = render(
       <Provider store={store}>
         <ServiceCard {...mockService} />
       </Provider>
@@ -156,7 +155,7 @@ describe('ServiceCard', () => {
 
   it('should add service to cart when add button is clicked', () => {
     const store = createMockStore();
-    const { container } = render(
+    render(
       <Provider store={store}>
         <ServiceCard {...mockService} />
       </Provider>

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+/* global global */
+import { describe, it, expect, beforeEach } from 'vitest';
 import store from './store';
 
 // Mock localStorage

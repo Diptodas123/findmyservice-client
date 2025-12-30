@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '../../../src/test/test-utils';
 import Signup from './Signup';
 import apiClient from '../../utils/apiClient';
-import toastMessage from '../../utils/toastMessage';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('../../utils/apiClient', () => ({
@@ -42,7 +41,7 @@ describe('Signup', () => {
   });
 
   it('should render submit button', () => {
-    const { container } = render(<Signup />);
+    render(<Signup />);
     const submitButton = screen.getByRole('button', { name: /^sign up$/i });
     expect(submitButton).toBeInTheDocument();
   });
@@ -161,7 +160,7 @@ describe('Signup', () => {
 
   // Validation tests
   it('should validate email format on submit', async () => {
-    const { container } = render(<Signup />);
+    render(<Signup />);
     const submitButton = screen.getByRole('button', { name: /^sign up$/i });
     
     await fireEvent.click(submitButton);
@@ -270,12 +269,11 @@ describe('Signup', () => {
   });
 
   it('should handle successful PROVIDER signup', async () => {
-    const user = userEvent.setup();
     apiClient.post.mockResolvedValueOnce({
       message: 'Registration successful',
     });
     
-    const { container } = render(<Signup />);
+    render(<Signup />);
     
     // Just verify provider signup structure exists
     const roleSelect = screen.getByLabelText(/register as/i);

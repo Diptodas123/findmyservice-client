@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '../../../src/test/test-utils';
+import { render, waitFor } from '../../../src/test/test-utils';
 import RecommendedServices from './RecommendedServices';
 import apiClient from '../../utils/apiClient';
 

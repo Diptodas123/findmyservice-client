@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '../../../src/test/test-utils';
+import { render, screen, fireEvent } from '../../../src/test/test-utils';
 import Cart from './Cart';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import cartReducer from '../../store/cartSlice';
 import userReducer from '../../store/userSlice';
-import apiClient from '../../utils/apiClient';
-import toastMessage from '../../utils/toastMessage';
 
 vi.mock('../../utils/apiClient', () => ({
   default: {
@@ -123,7 +121,7 @@ describe('Cart', () => {
       user: { profile: null },
     });
     
-    const { container } = render(
+    const { container: _container } = render(
       <Provider store={store}>
         <Cart />
       </Provider>

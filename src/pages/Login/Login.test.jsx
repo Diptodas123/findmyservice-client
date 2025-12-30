@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '../../../src/test/test-utils';
 import Login from './Login';
 import apiClient from '../../utils/apiClient';
-import toastMessage from '../../utils/toastMessage';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('../../utils/apiClient', () => ({
@@ -171,7 +170,7 @@ describe('Login', () => {
   });
 
   it('should require password field', async () => {
-    const { container } = render(<Login />);
+    render(<Login />);
     const submitButton = screen.getByRole('button', { name: /^login$/i });
     
     await fireEvent.click(submitButton);
@@ -290,7 +289,6 @@ describe('Login', () => {
   });
 
   it('should handle PROVIDER login', async () => {
-    const user = userEvent.setup();
     apiClient.post.mockResolvedValueOnce({
       token: 'provider-token',
       providerId: 'provider123',
@@ -301,7 +299,7 @@ describe('Login', () => {
       providerId: 'provider123',
     });
     
-    const { container } = render(<Login />);
+    render(<Login />);
     
     // Just verify provider login structure exists
     const roleSelect = screen.getByLabelText(/login as/i);
