@@ -71,6 +71,12 @@ jobs:
           rm -rf node_modules
           npm install
       
+      - name: Start dev server
+        run: npm run dev &
+        
+      - name: Wait for server
+        run: npx wait-on http://localhost:5173 --timeout 60000
+      
       - name: Run E2E tests
         run: npm run test:e2e
       
