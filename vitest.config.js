@@ -5,6 +5,10 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_CLOUDINARY_CLOUD_NAME': JSON.stringify('test-cloud-name'),
+    'import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET': JSON.stringify('test-upload-preset'),
+  },
   test: {
     globals: true,
     environment: 'jsdom',

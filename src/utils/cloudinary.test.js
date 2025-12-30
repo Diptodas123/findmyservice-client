@@ -1,14 +1,5 @@
 /* global global */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
-// Mock environment variables before importing cloudinary
-vi.stubGlobal('import.meta', {
-  env: {
-    VITE_CLOUDINARY_CLOUD_NAME: 'test-cloud',
-    VITE_CLOUDINARY_UPLOAD_PRESET: 'test-preset',
-  }
-});
-
 import cloudinary from './cloudinary';
 import toastMessage from './toastMessage';
 
