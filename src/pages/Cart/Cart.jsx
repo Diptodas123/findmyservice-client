@@ -99,11 +99,33 @@ const Cart = () => {
 
         setLoading(true);
         try {
+            // Validate that all providers still exist before submitting
+            const providerIds = [...new Set(items.map(item =>
+                typeof item.providerId === 'object' && item.providerId !== null ? item.providerId.providerId : item.providerId
+            ))];
+            const providerChecks = await Promise.all(
+                providerIds.map(id =>
+                    apiClient.get(`/api/v1/providers/${id}`).then(() => null).catch(() => id)
+                )
+            );
+            const missingProviders = providerChecks.filter(Boolean);
+            if (missingProviders.length > 0) {
+                const staleItems = items.filter(item => {
+                    const pid = typeof item.providerId === 'object' && item.providerId !== null ? item.providerId.providerId : item.providerId;
+                    return missingProviders.includes(pid);
+                });
+                staleItems.forEach(item => dispatch(removeItem(item.serviceId)));
+                return toastMessage({
+                    msg: `${staleItems.length} service(s) were removed from your cart because their provider no longer exists. Please review your cart.`,
+                    type: 'error'
+                });
+            }
+
             // Transform cart items to the specified payload format
             const orderPayload = items.map(item => ({
                 userId: user.userId,
-                providerId: item.providerId,
-                serviceId: item.serviceId,
+                providerId: typeof item.providerId === 'object' && item.providerId !== null ? item.providerId.providerId : item.providerId,
+                serviceId: typeof item.serviceId === 'object' && item.serviceId !== null ? item.serviceId.serviceId : item.serviceId,
                 requestedDate: item.requestedDate || new Date().toISOString(),
             }));
 
@@ -223,7 +245,7 @@ const Cart = () => {
                                                     {it.description}
                                                 </Typography>
                                                 <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600, mb: 1.5 }}>
-                                                    Provider ID: {it.providerId || 'Unknown'}
+                                                    Provider ID: {(typeof it.providerId === 'object' && it.providerId !== null ? it.providerId.providerId : it.providerId) || 'Unknown'}
                                                 </Typography>
                                                 
                                                 {/* Requested Date Picker */}

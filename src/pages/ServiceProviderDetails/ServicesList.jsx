@@ -19,7 +19,7 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
 
     const handleAddToCart = (service) => {
         if (isInCart(service.serviceId)) {
-            toastMessage('info', `${service.serviceName} is already in cart`);
+            toastMessage({ msg: `${service.serviceName} is already in cart`, type: 'info' });
             return;
         }
 
@@ -36,12 +36,12 @@ const ServicesList = ({ services = [], loading, truncate, pageSize: initialPageS
         
         console.log('ServicesList - Adding to cart:', cartItem);
         dispatch(addItem(cartItem));
-        toastMessage('success', `${service.serviceName} added to cart!`);
+        toastMessage({ msg: `${service.serviceName} added to cart!`, type: 'success' });
     };
 
     const handleRemoveFromCart = (serviceId) => {
         dispatch(removeItem(serviceId));
-        toastMessage('success', 'Service removed from cart!');
+        toastMessage({ msg: 'Service removed from cart!', type: 'success' });
     };
 
     if (loading) {

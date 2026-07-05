@@ -40,14 +40,18 @@ const ServiceDetails = () => {
 
                 // Fetch provider details if providerId exists
                 if (serviceData.providerId) {
+                    const rawPid = serviceData.providerId;
+                    const resolvedPid = typeof rawPid === 'object' && rawPid !== null
+                        ? rawPid.providerId ?? rawPid.id
+                        : rawPid;
                     try {
-                        const providerData = await apiClient.get(`/api/v1/providers/${serviceData.providerId}`);
+                        const providerData = await apiClient.get(`/api/v1/providers/${resolvedPid}`);
                         setProvider(providerData);
                     } catch (providerErr) {
                         console.error('Error fetching provider:', providerErr);
                         // Set basic provider info from service data
                         setProvider({
-                            providerId: serviceData.providerId,
+                            providerId: resolvedPid,
                             providerName: 'Provider',
                             profilePictureUrl: '',
                             phone: null,
@@ -114,7 +118,7 @@ const ServiceDetails = () => {
     }, [id]);
 
     const handleCallProvider = () => {
-        if (provider.phone) window.location.href = `tel:${provider.phone}`;
+        if (provider?.phone) window.location.href = `tel:${provider.phone}`;
         else toastMessage({ msg: 'Provider phone not available', type: 'info' });
     };
 
