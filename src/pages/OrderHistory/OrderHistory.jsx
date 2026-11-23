@@ -152,7 +152,7 @@ const OrderHistory = () => {
             msg: 'Services added to cart for reorder!', 
             type: 'success' 
         });
-    }, [user?.userId]);
+    };
 
     if (loading) {
         return (
