@@ -41,7 +41,7 @@ export default function ServiceCard({ serviceId, name, description, image, provi
 
     // If already in cart, just show message
     if (isInCart) {
-      toastMessage('info', 'This service is already in your cart');
+      toastMessage({ msg: 'This service is already in your cart', type: 'info' });
       return;
     }
 
@@ -71,13 +71,13 @@ export default function ServiceCard({ serviceId, name, description, image, provi
     console.log('Adding to cart:', cartItem);
     dispatch(addItem(cartItem));
 
-    toastMessage('success', `${fullService.serviceName} added to cart!`);
+    toastMessage({ msg: `${fullService.serviceName} added to cart!`, type: 'success' });
   };
 
   const handleRemoveFromCart = (e) => {
     e.stopPropagation(); // Prevent card click
     dispatch(removeItem(serviceId));
-    toastMessage('success', 'Service removed from cart');
+    toastMessage({ msg: 'Service removed from cart', type: 'success' });
   };
 
   const formatPrice = (priceValue) => {
