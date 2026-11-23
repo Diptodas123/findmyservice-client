@@ -123,7 +123,7 @@ const ServiceDetails = () => {
     };
 
     const handleEmailProvider = () => {
-        if (provider.email) window.location.href = `mailto:${provider.email}`;
+        if (provider?.email) window.location.href = `mailto:${provider.email}`;
         else toastMessage({ msg: 'Provider email not available', type: 'info' });
     };
     const [reviewSort, setReviewSort] = React.useState('newest');
