@@ -65,12 +65,10 @@ describe('Application E2E Tests', () => {
   it('should load without console errors', () => {
     cy.visit('/', {
       onBeforeLoad(win) {
-        cy.spy(win.console, 'error');
+        cy.stub(win.console, 'error').as('consoleError');
       },
     });
-    
-    cy.window().then((win) => {
-      expect(win.console.error).to.not.be.called;
-    });
+
+    cy.get('@consoleError').should('not.have.been.called');
   });
 });
