@@ -20,13 +20,8 @@ jobs:
           node-version: 22.x
           cache: 'npm'
 
-      - name: Clear npm cache
-        run: npm cache clean --force
-
       - name: Install dependencies
-        run: |
-          rm -rf node_modules
-          npm install
+        run: npm ci
 
       - name: Run linter
         run: npm run lint
@@ -96,7 +91,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build application
         run: npm run build
