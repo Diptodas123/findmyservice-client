@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Paper,
   Typography,
@@ -84,7 +84,7 @@ const BookingsList = ({ provider }) => {
     }
   }, [provider?.providerId, fetchBookings]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     if (!provider?.providerId) {
       toastMessage({ msg: 'Provider information not available', type: 'error' });
       return;
@@ -204,7 +204,7 @@ const BookingsList = ({ provider }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [provider?.providerId]);
 
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
@@ -307,6 +307,12 @@ const BookingsList = ({ provider }) => {
   const handleCloseMenu = () => {
     setMenuAnchor(null);
     setMenuBookingId(null);
+  };
+
+  const handleOpenMenu = (e, bookingId) => {
+    e.stopPropagation();
+    setMenuAnchor(e.currentTarget);
+    setMenuBookingId(bookingId);
   };
 
   const filteredBookings = useMemo(() => {
@@ -457,6 +463,7 @@ const BookingsList = ({ provider }) => {
                 <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Payment</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -507,6 +514,11 @@ const BookingsList = ({ provider }) => {
                   </TableCell>
                   <TableCell onClick={() => handleViewDetails(booking)} sx={{ cursor: 'pointer' }}>
                     {getPaymentChip(booking.paymentStatus)}
+                  </TableCell>
+                  <TableCell>
+                    <IconButton size="small" onClick={(e) => handleOpenMenu(e, booking.orderId)}>
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
