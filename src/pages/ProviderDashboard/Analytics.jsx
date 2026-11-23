@@ -341,9 +341,11 @@ const Analytics = ({ provider }) => {
               </Typography>
             )}
           </Box>
-          <Avatar sx={{ bgcolor: `${color}.main`, width: 48, height: 48 }}>
-            <Icon />
-          </Avatar>
+          {Icon && (
+            <Avatar sx={{ bgcolor: `${color}.main`, width: 48, height: 48 }}>
+              <Icon />
+            </Avatar>
+          )}
         </Box>
         {trend !== undefined && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
