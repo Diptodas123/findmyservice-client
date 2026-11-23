@@ -4,7 +4,7 @@ import HowItWorks from '../../components/HowItWorks/HowItWorks';
 import Testimonials from '../../components/Testimonials/Testimonials';
 import RecommendedServices from '../../components/RecommendedServices/RecommendedServices';
 import PopularServiceProviders from '../../components/PopularServiceProviders/PopularServiceProviders';
-import NewsLetter from '../../components/Newsletter/newsletter';
+import NewsLetter from '../../components/Newsletter/NewsLetter';
 
 const HomePage = () => {
 

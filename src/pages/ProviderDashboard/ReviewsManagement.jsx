@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import apiClient from '../../utils/apiClient';
 import {
   Paper,
   Typography,
@@ -45,14 +46,7 @@ const ReviewsManagement = ({ provider }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState('all'); // all, 5star, 4star, 3star, 2star, 1star
 
-  // Fetch feedbacks when component mounts or provider changes
-  useEffect(() => {
-    if (provider?.providerId) {
-      fetchFeedbacks();
-    }
-  }, [provider?.providerId]);
-
-  const fetchFeedbacks = async () => {
+  const fetchFeedbacks = useCallback(async () => {
     if (!provider?.providerId) {
       toastMessage({ msg: 'Provider information not available', type: 'error' });
       return;
@@ -138,7 +132,14 @@ const ReviewsManagement = ({ provider }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [provider?.providerId]);
+
+  // Fetch feedbacks when component mounts or provider changes
+  useEffect(() => {
+    if (provider?.providerId) {
+      fetchFeedbacks();
+    }
+  }, [provider?.providerId, fetchFeedbacks]);
 
   // Calculate statistics
   const stats = useMemo(() => {

@@ -731,7 +731,7 @@ export const mockOrderAPI = {
                     );
                     
                     resolve(sortedOrders);
-                } catch (error) {
+                } catch {
                     reject({
                         success: false,
                         message: 'Failed to fetch user orders'
@@ -758,7 +758,7 @@ export const mockOrderAPI = {
                             message: 'Order not found'
                         });
                     }
-                } catch (error) {
+                } catch {
                     reject({
                         success: false,
                         message: 'Failed to fetch order details'
@@ -787,7 +787,7 @@ export const mockOrderAPI = {
                     
                     MOCK_ORDERS.push(newOrder);
                     resolve(newOrder);
-                } catch (error) {
+                } catch {
                     reject({
                         success: false,
                         message: 'Failed to create order'

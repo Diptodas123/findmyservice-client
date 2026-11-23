@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Paper,
   Typography,
@@ -40,9 +40,9 @@ const Analytics = ({ provider }) => {
     if (provider?.providerId) {
       fetchAnalyticsData();
     }
-  }, [provider?.providerId]);
+  }, [provider?.providerId, fetchAnalyticsData]);
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     if (!provider?.providerId) {
       setError('Provider information not available');
       setLoading(false);
@@ -102,7 +102,7 @@ const Analytics = ({ provider }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [provider?.providerId]);
 
   // Calculate analytics from real data
   const analytics = useMemo(() => {
@@ -286,7 +286,7 @@ const Analytics = ({ provider }) => {
     });
 
     // Calculate monthly revenues
-    Object.entries(serviceMonthlyStats).forEach(([serviceName, monthlyData]) => {
+    Object.entries(serviceMonthlyStats).forEach(([, monthlyData]) => {
       thisMonthRevenue += monthlyData.basePrice * monthlyData.thisMonth;
       lastMonthRevenue += monthlyData.basePrice * monthlyData.lastMonth;
     });
@@ -322,9 +322,9 @@ const Analytics = ({ provider }) => {
       totalServices: services.length,
       servicesWithBookings: allServices.filter(s => s.hasBookings).length
     };
-  }, [bookings, reviews, loading]);
+  }, [bookings, reviews, loading, services]);
 
-  const StatCard = ({ title, value, subtitle, icon: Icon, color = 'primary', trend }) => (
+  const StatCard = ({ title, value, subtitle, color = 'primary', icon: Icon, trend }) => (
     <Card sx={{ height: '100%' }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -341,9 +341,11 @@ const Analytics = ({ provider }) => {
               </Typography>
             )}
           </Box>
-          <Avatar sx={{ bgcolor: `${color}.main`, width: 48, height: 48 }}>
-            <Icon />
-          </Avatar>
+          {Icon && (
+            <Avatar sx={{ bgcolor: `${color}.main`, width: 48, height: 48 }}>
+              <Icon />
+            </Avatar>
+          )}
         </Box>
         {trend !== undefined && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

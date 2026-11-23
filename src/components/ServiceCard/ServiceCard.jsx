@@ -7,8 +7,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useState } from 'react';
-import { addItem, clearCart, removeItem } from '../../store/cartSlice';
+import { addItem, removeItem } from '../../store/cartSlice';
 import toastMessage from '../../utils/toastMessage';
 
 export default function ServiceCard({ serviceId, name, description, image, provider, price, rating, location, availability, providerId, fullService }) {

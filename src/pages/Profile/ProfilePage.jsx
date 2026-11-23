@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import ProfileSidebar from './ProfileSidebar.jsx';
 import { toast } from 'react-toastify';
@@ -48,7 +48,7 @@ import { setUser } from '../../store/userSlice';
 const ProfilePage = () => {
   const dispatch = useDispatch();
   const reduxProfile = useSelector((s) => s.user?.profile || {});
-  const cartItems = useSelector((s) => s.cart?.items || []);
+  const _cartItems = useSelector((s) => s.cart?.items || []);
   const theme = useTheme();
 
   const [activeTab, setActiveTab] = useState('personal');
@@ -146,7 +146,7 @@ const ProfilePage = () => {
     setFormData(prev => ({ ...prev, profilePictureUrl: '' }));
   };
 
-  const fetchOrderHistory = async () => {
+  const fetchOrderHistory = useCallback(async () => {
     try {
       setOrdersLoading(true);
       setOrdersError(null);
@@ -229,19 +229,13 @@ const ProfilePage = () => {
     } finally {
       setOrdersLoading(false);
     }
-  };
+  }, [reduxProfile?.userId]);
 
   useEffect(() => {
     if (activeTab === 'orders' && reduxProfile?.userId) {
       fetchOrderHistory();
     }
-  }, [activeTab, reduxProfile?.userId]);
-
-  useEffect(() => {
-    if (activeTab === 'orders' && reduxProfile?.userId) {
-      fetchOrderHistory();
-    }
-  }, [activeTab, reduxProfile?.userId]);
+  }, [activeTab, reduxProfile?.userId, fetchOrderHistory]);
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
