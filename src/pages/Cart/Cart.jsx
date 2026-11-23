@@ -34,19 +34,6 @@ const Cart = () => {
     const items = useSelector((s) => s.cart.items || []);
     const dispatch = useDispatch();
     
-    // Debug: Check what's in the cart
-    React.useEffect(() => {
-        console.log('Cart Redux items:', items);
-        items.forEach((item, index) => {
-            console.log(`Cart item ${index}:`, {
-                serviceId: item.serviceId,
-                serviceName: item.serviceName,
-                providerId: item.providerId,
-                fullItem: item
-            });
-        });
-    }, [items]);
-    
     const subtotal = items.reduce((sum, it) => sum + (Number(it.cost) || 0), 0);
     const TAX_RATE = 0.18; // 18% GST
     const SERVICE_FEE = 50; // flat service fee
@@ -81,10 +68,9 @@ const Cart = () => {
         // Check if all items have provider ID
         const itemsWithoutProvider = items.filter(item => !item.providerId);
         if (itemsWithoutProvider.length > 0) {
-            console.log('Items missing provider ID:', itemsWithoutProvider);
-            return toastMessage({ 
-                msg: `Some services are missing provider information. Please remove and re-add these services to your cart.`, 
-                type: 'error' 
+            return toastMessage({
+                msg: `Some services are missing provider information. Please remove and re-add these services to your cart.`,
+                type: 'error'
             });
         }
 
@@ -99,6 +85,25 @@ const Cart = () => {
 
         setLoading(true);
         try {
+            // Validate that all providers still exist before submitting
+            const providerIds = [...new Set(items.map(item => item.providerId))];
+            const providerChecks = await Promise.all(
+                providerIds.map(id =>
+                    apiClient.get(`/api/v1/providers/${id}`)
+                        .then(() => null)
+                        .catch(err => (err.response?.status === 404 ? id : Promise.reject(err)))
+                )
+            );
+            const missingProviders = providerChecks.filter(Boolean);
+            if (missingProviders.length > 0) {
+                const staleItems = items.filter(item => missingProviders.includes(item.providerId));
+                staleItems.forEach(item => dispatch(removeItem(item.serviceId)));
+                return toastMessage({
+                    msg: `${staleItems.length} service(s) were removed from your cart because their provider no longer exists. Please review your cart.`,
+                    type: 'error'
+                });
+            }
+
             // Transform cart items to the specified payload format
             const orderPayload = items.map(item => ({
                 userId: user.userId,
@@ -106,8 +111,6 @@ const Cart = () => {
                 serviceId: item.serviceId,
                 requestedDate: item.requestedDate || new Date().toISOString(),
             }));
-
-            console.log('Checkout payload:', orderPayload);
 
             const result = await apiClient.post('/api/v1/orders/checkout', orderPayload);
             

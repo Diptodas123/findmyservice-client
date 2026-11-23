@@ -4,27 +4,33 @@ const initialState = {
   items: [],
 };
 
+const toId = (val, key) =>
+  val !== null && typeof val === 'object' ? val[key] ?? val.id ?? null : val;
+
+const normalizeItem = (item) => ({
+  ...item,
+  providerId: toId(item.providerId, 'providerId'),
+  serviceId: toId(item.serviceId, 'serviceId'),
+});
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
     addItem(state, action) {
-      const item = action.payload;
-      
-      // Check if item already exists
-      const exists = state.items.find(i => i.serviceId === item.serviceId);
+      const normalizedItem = normalizeItem(action.payload);
+      const exists = state.items.find(i => i.serviceId === normalizedItem.serviceId);
       if (!exists) {
-        state.items.push(item);
+        state.items.push(normalizedItem);
       }
     },
     removeItem(state, action) {
-      const predicate = action.payload; 
+      const predicate = action.payload;
       if (typeof predicate === 'function') {
         state.items = state.items.filter(i => !predicate(i));
       } else if (predicate && typeof predicate === 'object' && predicate.providerId && predicate.serviceName) {
         state.items = state.items.filter(i => !(i.providerId === predicate.providerId && i.serviceName === predicate.serviceName));
       } else {
-        // Handle serviceId as a simple value
         state.items = state.items.filter(i => i.serviceId !== predicate);
       }
     },
@@ -39,7 +45,7 @@ const cartSlice = createSlice({
       state.items = [];
     },
     setCart(state, action) {
-      state.items = action.payload || [];
+      state.items = (action.payload || []).map(normalizeItem);
     }
   }
 });
