@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import apiClient from '../../utils/apiClient';
 import {
   Paper,
@@ -51,9 +51,9 @@ const ReviewsManagement = ({ provider }) => {
     if (provider?.providerId) {
       fetchFeedbacks();
     }
-  }, [provider?.providerId]);
+  }, [provider?.providerId, fetchFeedbacks]);
 
-  const fetchFeedbacks = async () => {
+  const fetchFeedbacks = useCallback(async () => {
     if (!provider?.providerId) {
       toastMessage({ msg: 'Provider information not available', type: 'error' });
       return;
@@ -139,7 +139,7 @@ const ReviewsManagement = ({ provider }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [provider?.providerId]);
 
   // Calculate statistics
   const stats = useMemo(() => {
