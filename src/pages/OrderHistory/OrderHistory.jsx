@@ -48,7 +48,7 @@ const OrderHistory = () => {
         
         // Token exists, either fetch orders directly or wait for user profile
         fetchOrderHistory();
-    }, [user?.userId, fetchOrderHistory]);
+    }, [user?.userId]);
 
     const fetchOrderHistory = useCallback(async () => {
         try {
@@ -93,7 +93,7 @@ const OrderHistory = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.userId]);
 
     const getStatusIcon = (status) => {
         switch (status) {
