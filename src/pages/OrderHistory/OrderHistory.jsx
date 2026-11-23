@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import {
     Box,
@@ -50,7 +50,7 @@ const OrderHistory = () => {
         fetchOrderHistory();
     }, [user?.userId, fetchOrderHistory]);
 
-    const fetchOrderHistory = async () => {
+    const fetchOrderHistory = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -152,7 +152,7 @@ const OrderHistory = () => {
             msg: 'Services added to cart for reorder!', 
             type: 'success' 
         });
-    };
+    }, [user?.userId]);
 
     if (loading) {
         return (
