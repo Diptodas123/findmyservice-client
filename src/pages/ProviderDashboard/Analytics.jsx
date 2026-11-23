@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Paper,
   Typography,
@@ -42,7 +42,7 @@ const Analytics = ({ provider }) => {
     }
   }, [provider?.providerId, fetchAnalyticsData]);
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     if (!provider?.providerId) {
       setError('Provider information not available');
       setLoading(false);
@@ -102,7 +102,7 @@ const Analytics = ({ provider }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [provider?.providerId]);
 
   // Calculate analytics from real data
   const analytics = useMemo(() => {
@@ -324,7 +324,7 @@ const Analytics = ({ provider }) => {
     };
   }, [bookings, reviews, loading, services]);
 
-  const StatCard = ({ title, value, subtitle, color = 'primary', trend }) => (
+  const StatCard = ({ title, value, subtitle, color = 'primary', icon: Icon, trend }) => (
     <Card sx={{ height: '100%' }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -341,9 +341,11 @@ const Analytics = ({ provider }) => {
               </Typography>
             )}
           </Box>
-          <Avatar sx={{ bgcolor: `${color}.main`, width: 48, height: 48 }}>
-            <Icon />
-          </Avatar>
+          {Icon && (
+            <Avatar sx={{ bgcolor: `${color}.main`, width: 48, height: 48 }}>
+              <Icon />
+            </Avatar>
+          )}
         </Box>
         {trend !== undefined && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

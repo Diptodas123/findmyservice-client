@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import {
     Box,
@@ -36,21 +36,7 @@ const OrderHistory = () => {
     const [error, setError] = useState(null);
     const user = useSelector(state => state.user?.profile);
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-            // No token, definitely not logged in
-            setError('Please log in to view your order history');
-            setLoading(false);
-            return;
-        }
-        
-        // Token exists, either fetch orders directly or wait for user profile
-        fetchOrderHistory();
-    }, [user?.userId, fetchOrderHistory]);
-
-    const fetchOrderHistory = async () => {
+    const fetchOrderHistory = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -93,7 +79,21 @@ const OrderHistory = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.userId]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // No token, definitely not logged in
+            setError('Please log in to view your order history');
+            setLoading(false);
+            return;
+        }
+
+        // Token exists, either fetch orders directly or wait for user profile
+        fetchOrderHistory();
+    }, [user?.userId, fetchOrderHistory]);
 
     const getStatusIcon = (status) => {
         switch (status) {
