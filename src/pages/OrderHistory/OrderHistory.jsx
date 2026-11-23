@@ -36,20 +36,6 @@ const OrderHistory = () => {
     const [error, setError] = useState(null);
     const user = useSelector(state => state.user?.profile);
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-            // No token, definitely not logged in
-            setError('Please log in to view your order history');
-            setLoading(false);
-            return;
-        }
-        
-        // Token exists, either fetch orders directly or wait for user profile
-        fetchOrderHistory();
-    }, [user?.userId]);
-
     const fetchOrderHistory = useCallback(async () => {
         try {
             setLoading(true);
@@ -94,6 +80,20 @@ const OrderHistory = () => {
             setLoading(false);
         }
     }, [user?.userId]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // No token, definitely not logged in
+            setError('Please log in to view your order history');
+            setLoading(false);
+            return;
+        }
+
+        // Token exists, either fetch orders directly or wait for user profile
+        fetchOrderHistory();
+    }, [user?.userId, fetchOrderHistory]);
 
     const getStatusIcon = (status) => {
         switch (status) {
