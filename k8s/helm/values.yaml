@@ -1,0 +1,13 @@
+replicaCount: 1
+
+image:
+  repository: findmyservice-frontend
+  tag: latest
+  pullPolicy: Never
+
+namespace: findmyservice
+
+service:
+  type: NodePort
+  port: 80
+  nodePort: 30080

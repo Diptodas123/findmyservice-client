@@ -1,21 +1,25 @@
-name: CI Tests
+name: CI - Build, Test and Push
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
 
 jobs:
-  ci:
+  build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v7
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.x
           cache: 'npm'
@@ -26,22 +30,55 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-      - name: Run unit and integration tests
+      - name: Run unit tests
         run: npm run test:coverage
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
 
-      - name: Archive coverage reports
-        uses: actions/upload-artifact@v4
+      - name: Archive test results
+        uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: coverage-report
           path: coverage/
+          retention-days: 7
+
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
+          VITE_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.VITE_CLOUDINARY_UPLOAD_PRESET }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  e2e:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Start dev server
         run: npm run dev &
@@ -52,41 +89,31 @@ jobs:
       - name: Run E2E tests
         run: npm run test:e2e
 
-      - name: Upload Cypress Screenshots
-        uses: actions/upload-artifact@v4
+      - name: Upload Cypress screenshots
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: cypress-screenshots
           path: cypress/screenshots/
 
-      - name: Upload Cypress Videos
-        uses: actions/upload-artifact@v4
+      - name: Upload Cypress videos
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cypress-videos
           path: cypress/videos/
-          retention-days: 30
+          retention-days: 7
 
-      - name: Build application
-        run: npm run build
-
-      - name: Archive build
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: dist/
-
-  deploy:
-    needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  security-scan:
+    needs: build-and-test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v7
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22.x
           cache: 'npm'
@@ -94,15 +121,67 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build application
-        run: npm run build
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
         env:
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-          VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
-          VITE_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.VITE_CLOUDINARY_UPLOAD_PRESET }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --sarif-file-output=snyk.sarif
 
-      - name: Deploy to Netlify
-        run: npx netlify-cli deploy --dir=dist --prod --message "Deploy from CI ${{ github.sha }}"
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+  push:
+    needs: [ e2e, security-scan ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          tags: |
+            hritamkar03/findmyservice-client:latest
+            hritamkar03/findmyservice-client:${{ env.SHORT_SHA }}
+          load: true
+
+      - name: Run Snyk to check Docker image for vulnerabilities
+        uses: snyk/actions/docker@master
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: hritamkar03/findmyservice-client:${{ env.SHORT_SHA }}
+          args: --severity-threshold=high --sarif-file-output=snyk-docker.sarif
+
+      - name: Upload Snyk Docker results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: snyk-docker.sarif
+
+      - name: Push Docker image
+        run: |
+          docker push hritamkar03/findmyservice-client:latest
+          docker push hritamkar03/findmyservice-client:${{ env.SHORT_SHA }}

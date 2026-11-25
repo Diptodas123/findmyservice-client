@@ -1,0 +1,31 @@
+name: CD - Deploy to Netlify
+
+on:
+  workflow_run:
+    workflows: [ "CI - Build, Test and Push" ]
+    types: [ completed ]
+    branches: [ main ]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --dir=dist --prod --message "Deploy from CI ${{ github.event.workflow_run.head_sha }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
