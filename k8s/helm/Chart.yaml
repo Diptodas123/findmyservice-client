@@ -1,0 +1,6 @@
+apiVersion: v2
+name: findmyservice-client
+description: Helm chart for FindMyService React frontend
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
